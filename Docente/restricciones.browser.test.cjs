@@ -1,0 +1,94 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const http=require('node:http');
+const {createRequire}=require('node:module');
+const {chromium}=createRequire('C:/Users/consu/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json')('playwright');
+const root=path.resolve(__dirname,'..');
+const ficha={id:'test',alumnoId:'alumno-test',numeroFicha:'20270001',fechaMatricula:'23/10/2026',nie:'123456789012',primerNombre:'María',segundoNombre:'Isabel',primerApellido:'Hernández',segundoApellido:'Martínez',fechaNacimiento:`${new Date().getFullYear()-16}-01-01`,edad:16,lugarNacimiento:'Santa Tecla - La Libertad Sur',sexo:'Femenino',grado:'Primer Año',especialidad:'Bachillerato General',tipoIngreso:'Nuevo ingreso',ultimoAnioAprobado:'Noveno Grado',colegioAnterior:'Instituto Nacional',telefonoEstudiante:'2457-8913',correoEstudiantil:'123456789012@clases.edu.sv',correoPersonal:'maria@gmail.com',hermanosCentroeducativo:'No',computadoraMineducyt:'Sí',internet:'Sí',tallaBlusa:'M',tallaFalda:'S',tallaZapatos:'36',tipoTransporte:'Público',distanciaKm:'3.5',zonaResidencia:'Urbana',conQuienVive:'Ambos',direccionResidencia:'Colonia Las Flores, Santa Tecla',enfermedad:'No',responsable:'Ana María',parentesco:'Mamá',duiResponsable:'12345678-9',telefonoResponsable:'7123-4568',whatsappResponsable:'7123-4568',correoResponsable:'ana@gmail.com',madreNombre:'Ana María',madreOcupacion:'Docente',madreLugarTrabajo:'Instituto Nacional',madreDui:'12345678-9',madreCelular:'7123-4568',padreNombre:'José Manuel',padreOcupacion:'Comerciante',padreLugarTrabajo:'Mercado Central',padreDui:'23456789-0',padreCelular:'7234-5679',fotoEstudiante:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZk0AAAAASUVORK5CYII='};
+test('Docente: edición y documentos pendientes en Administrador',async()=>{
+ const server=http.createServer((req,res)=>{
+  const url=new URL(req.url,'http://localhost');const name=decodeURIComponent(url.pathname);
+  res.setHeader('Content-Type',name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.css')?'text/css':name.endsWith('.png')?'image/png':'text/javascript; charset=utf-8');
+  if(name==='/auth-guard.js')return res.end('export async function protegerRuta(){return true} export function cerrarSesionSupabase(){}');
+  if(name==='/supabase-data.js')return res.end(`export async function guardarDocumentos(r,d){window.__registro.documentosChecklist=d} export async function buscarMatriculaPorNie(nie){if(window.__falloNie)throw Error('sin conexión');return nie===window.__registro.nie?window.__registro:null} export async function actualizarMatricula(r,c){window.__guardados.push(c);Object.assign(window.__registro,c)} export async function obtenerPerfil(){return null} export async function listarMatriculas(){return [window.__registro]} export async function crearDocente(){} export async function eliminarMatricula(){} export async function listarDocentes(){return []}`);
+  if(name==='/ficha-oficial.js')return res.end('export function mostrarFichaOficial(){}');
+  const file=path.resolve(root,'.'+name);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.statusCode=404;return res.end();}
+  let body=fs.readFileSync(file);
+  if(name==='/Administrador/admin.html'||name==='/Docente/docente.html')body=body.toString().replace(/<script\b[^>]*src="https:[^"]*"[^>]*>[\s\S]*?<\/script>/g,'').replace('</head>',`<script>window.__registro=${JSON.stringify(ficha)};window.__guardados=[];</script></head>`);
+  res.end(body);
+ });
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+ try{
+  browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
+  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`http://127.0.0.1:${server.address().port}/Docente/docente.html`);
+  await page.waitForFunction(()=>typeof window.buscarMatricula==='function');
+  await page.locator('#buscarInput').fill(ficha.nie);await page.evaluate(()=>window.buscarMatricula());
+  await page.evaluate(()=>window.mostrarInscritos());
+  assert.equal(await page.locator('#listaInscritos tr').count(),1);
+  await page.locator('#listaInscritos button').first().click();
+  assert.equal(await page.locator('#seccionInscritos').evaluate(el=>el.hidden),true);
+  assert.equal(await page.locator('#tipoIndicacionesSelect').evaluate(el=>el.disabled),true);
+  assert.equal(await page.locator('#tipoIndicacionesSelect').inputValue(),'primer_nuevo');
+  assert.equal(await page.locator('[data-ir-paso]').count(),6);
+  const original=await page.evaluate(()=>window.__registro);
+  const combinaciones=[['Segundo Año','Antiguo ingreso','segundo_antiguo',4],['Tercer Año','Nuevo ingreso','tercer_nuevo',7],['Primer Año','Antiguo ingreso','primer_antiguo',6]];
+  for(const [grado,tipo,tipoDocumentos,total] of combinaciones){
+    await page.evaluate(({grado,tipo})=>{window.__registro.grado=grado;window.__registro.tipoIngreso=tipo;}, {grado,tipo});
+    await page.evaluate(()=>window.buscarMatricula());
+    assert.equal(await page.locator('#tipoIndicacionesSelect').inputValue(),tipoDocumentos);
+    assert.equal(await page.locator('#listaPrincipal input[type="checkbox"]').count(),total);
+  }
+  await page.evaluate(original=>{window.__registro={...original,tipoIngreso:'',documentosChecklist:{disponibilidadEstudiante:{tipoIngreso:'Nuevo ingreso'}}};},original);
+  await page.evaluate(()=>window.buscarMatricula());
+  assert.equal(await page.locator('#r_tipoIngreso').inputValue(),'Nuevo ingreso');
+  assert.equal(await page.locator('#tipoIndicacionesSelect').inputValue(),'primer_nuevo');
+  await page.evaluate(original=>{window.__registro=original},original);
+  await page.evaluate(()=>window.buscarMatricula());
+  await page.evaluate(()=>window.modificarcampos());
+  assert.equal(await page.locator('#r_primerNombre').getAttribute('maxlength'),'12');
+  assert.equal(await page.locator('#r_nie').getAttribute('maxlength'),'12');
+  assert.equal(await page.locator('#r_numeroFicha').evaluate(el=>el.readOnly),true);
+  assert.equal(await page.locator('#r_correoEstudiantil').evaluate(el=>el.readOnly),true);
+  await page.locator('#r_primerNombre').fill('Lucía');
+  await page.locator('[data-ir-paso="3"]').click();
+  await page.locator('#r_direccionResidencia').fill('Colonia Las Flores, calle central');
+  await page.evaluate(()=>window.guardarCambios());
+  assert.equal(await page.evaluate(()=>window.__guardados.length),1,await page.locator('#mensajeBusqueda').textContent());
+  assert.equal(await page.evaluate(()=>window.__guardados[0].primerNombre),'Lucía');
+  await page.evaluate(()=>window.modificarcampos());
+  await page.locator('#r_nie').fill('0000000');await page.evaluate(()=>window.guardarCambios());
+  assert.equal(await page.evaluate(()=>window.__guardados.length),1);
+  assert.match(await page.locator('.error-campo').first().textContent(),/NIE/);
+  await page.evaluate(()=>window.cancelarModificacion());
+  assert.equal(await page.locator('#r_nie').inputValue(),ficha.nie);
+  await page.evaluate(()=>window.toggleDocumentos());
+  await page.locator('#listaPrincipal input[type="checkbox"]').first().check();
+  await page.evaluate(()=>window.guardarDocumentos());
+  assert.match(await page.locator('#mensajeDocumentos').textContent(),/guardado/);
+  const registro=await page.evaluate(()=>window.__registro);
+  assert.equal(registro.documentosChecklist.principal[0].marcado,true);
+  assert.equal(registro.documentosChecklist.principal[1].marcado,false);
+  Object.assign(ficha,registro);
+  await page.goto(`http://127.0.0.1:${server.address().port}/Administrador/admin.html`);
+  await page.waitForFunction(()=>typeof window.buscarMatricula==='function');
+  await page.locator('#buscarInput').fill(ficha.nie);await page.evaluate(()=>window.buscarMatricula());
+  await page.evaluate(()=>window.verExpediente());
+  assert.equal(await page.locator('#exp_listaPrincipal .doc-estado.entregado').count(),1);
+  assert.equal(await page.locator('#exp_listaPrincipal .doc-estado.pendiente').count(),5);
+  assert.match(await page.locator('#exp_listaPrincipal .doc-estado.pendiente').first().textContent(),/Pendiente/);
+  await page.evaluate(async()=>{window.mostrarReportes();await window.buscarReportes();});
+  assert.match(await page.locator('#cuerpoTablaReportes').textContent(),/Documentos: Pendientes/);
+  assert.match(await page.locator('#cuerpoTablaMatriculados').textContent(),/No hay estudiantes/);
+  delete ficha.documentosChecklist;
+  await page.goto(`http://127.0.0.1:${server.address().port}/Administrador/admin.html`);
+  await page.waitForFunction(()=>typeof window.buscarMatricula==='function');
+  await page.locator('#buscarInput').fill(ficha.nie);await page.evaluate(()=>window.buscarMatricula());
+  await page.evaluate(()=>window.verExpediente());
+  assert.equal(await page.locator('#exp_listaPrincipal .doc-estado.pendiente').count(),6);
+  assert.deepEqual(errors,[]);
+ }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
+});
+

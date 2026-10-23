@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limpiar borrador de prueba</title>
+  <link rel="stylesheet" href="recuperar-comprobante.css">
+</head>
+<body>
+<main>
+  <h1>Limpiar borrador de prueba</h1>
+  <p>Cierre primero las otras pestañas del formulario para que no vuelvan a guardar el borrador anterior.</p>
+  <p>Este botón elimina únicamente los datos y la foto del borrador en este navegador. No modifica matrículas guardadas ni desactiva el guardado automático.</p>
+  <button id="limpiar" type="button">Eliminar mi borrador de prueba</button>
+  <p id="estado" role="status" aria-live="polite"></p>
+  <a id="abrir" href="nuevo_ingreso.html" hidden>Abrir formulario vacío</a>
+</main>
+<script>
+document.getElementById('limpiar').addEventListener('click', async function () {
+  this.disabled = true;
+  const estado = document.getElementById('estado');
+  try {
+    const texto = localStorage.getItem('matricula.borrador.v1');
+    const borrador = texto ? JSON.parse(texto) : null;
+    if (borrador?.id) {
+      await new Promise((resolve, reject) => {
+        const peticion = indexedDB.open('matricula-borrador', 1);
+        peticion.onupgradeneeded = () => peticion.result.createObjectStore('fotos');
+        peticion.onerror = () => reject(peticion.error);
+        peticion.onblocked = () => reject(new Error('Cierre las otras pestañas e intente nuevamente.'));
+        peticion.onsuccess = () => {
+          const db = peticion.result;
+          if (!db.objectStoreNames.contains('fotos')) { db.close(); resolve(); return; }
+          const tx = db.transaction('fotos', 'readwrite');
+          tx.objectStore('fotos').delete(borrador.id);
+          tx.oncomplete = () => { db.close(); resolve(); };
+          tx.onerror = () => { db.close(); reject(tx.error); };
+        };
+      });
+    }
+    localStorage.removeItem('matricula.borrador.v1');
+    estado.textContent = 'Borrador eliminado. Ya puede abrir el formulario vacío.';
+    document.getElementById('abrir').hidden = false;
+  } catch {
+    estado.textContent = 'No se pudo limpiar el borrador. Cierre las otras pestañas y vuelva a intentarlo.';
+    this.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

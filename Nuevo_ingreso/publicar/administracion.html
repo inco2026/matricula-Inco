@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Acceso del personal · INCO</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="pantalla-login">
+    <section class="card-login">
+      <img src="./img/Escudo-inc.png" alt="Escudo del Instituto Nacional de Comercio" class="logo-login">
+      <h1 class="titulo-principal">Acceso del personal</h1>
+      <h2 class="subtitulo-principal">Instituto Nacional de Comercio</h2>
+      <p>Ingrese con su cuenta de administrador, docente o coordinador.</p>
+      <form class="admin-login" id="formAdministrador">
+        <label for="usuarioAdmin">Correo electrónico</label>
+        <input type="email" id="usuarioAdmin" name="usuario" autocomplete="username" required>
+        <label for="passwordAdmin">Contraseña</label>
+        <input type="password" id="passwordAdmin" name="password" autocomplete="current-password" required>
+        <p class="mensaje-login" id="mensajeAdmin" role="status" aria-live="polite"></p>
+        <button type="submit" class="btn-ingreso btn-admin">Acceder</button>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

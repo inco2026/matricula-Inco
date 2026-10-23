@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Recuperar comprobante · INCO</title>
+  <link rel="stylesheet" href="recuperar-comprobante.css">
+</head>
+<body>
+<main>
+  <header class="controles"><a href="./index.html">Volver al inicio</a><button id="tema" type="button">Cambiar tema</button></header>
+  <section class="controles">
+    <h1>Recuperar comprobante</h1>
+    <p>Consulte su matrícula guardada. No necesita llenar el formulario otra vez.</p>
+    <form id="consulta" autocomplete="off">
+      <label for="nie">NIE del estudiante</label>
+      <input id="nie" name="nie" inputmode="numeric" pattern="[0-9]{1,12}" maxlength="12" required autocomplete="off">
+      <label for="nacimiento">Fecha de nacimiento del estudiante</label>
+      <input id="nacimiento" name="nacimiento" type="date" required autocomplete="off">
+      <label for="dui">DUI del responsable registrado</label>
+      <input id="dui" name="dui" inputmode="numeric" pattern="[0-9]{8}-[0-9]" maxlength="10" placeholder="00000000-0" required autocomplete="off">
+      <button id="buscar" type="submit">Buscar comprobante</button>
+    </form>
+    <p id="estado" role="status" aria-live="polite"></p>
+  </section>
+  <section id="resultado" hidden>
+    <article id="comprobante" tabindex="-1">
+      <h2>Comprobante de matrícula</h2>
+      <p>Instituto Nacional de Comercio</p>
+      <dl id="datos"></dl>
+    </article>
+    <div class="controles acciones">
+      <button type="button" id="pdf">Descargar PDF</button>
+      <button type="button" id="imprimir">Imprimir</button>
+      <button type="button" id="cerrar">Cerrar comprobante</button>
+      <p>También puede tomar una captura de esta pantalla.</p>
+    </div>
+  </section>
+</main>
+<script type="module" src="recuperar-comprobante.js"></script>
+</body>
+</html>
