@@ -8,6 +8,8 @@
 ========================================================= */
 
 /* Buscador de lugar de nacimiento */
+.fila-hermano .campo { min-width: 0; }
+.fila-hermano input, .fila-hermano select { width: 100%; min-width: 0; box-sizing: border-box; }
 .opciones-nacimiento {
   max-height: 240px;
   overflow-y: auto;
@@ -409,43 +411,23 @@ section[data-step="6"] h2::before { content: "6"; display:flex; align-items:cent
   gap: 0.35rem;
 }
 
-/* Iconos contextuales para los campos más reconocibles del Paso 1 */
-label[for="nie"]::before,
-label[for="duiEstudiante"]::before,
-label[for="duiResponsable"]::before,
-label[for="madreDui"]::before,
-label[for="padreDui"]::before { content: "🪪"; }
-
-label[for="primerApellido"]::before,
-label[for="segundoApellido"]::before,
-label[for="primerNombre"]::before,
-label[for="segundoNombre"]::before,
-label[for="responsable"]::before,
-label[for="madreNombre"]::before,
-label[for="padreNombre"]::before { content: "🖊️"; }
-
-label[for="lugarNacimiento"]::before,
-label[for="madreLugarNacimiento"]::before,
-label[for="padreLugarNacimiento"]::before,
-label[for="direccionResidencia"]::before { content: "📍"; }
-
-label[for="fechaNacimiento"]::before,
-label[for="madreFechaNacimiento"]::before,
-label[for="padreFechaNacimiento"]::before { content: "🎂"; }
-
-label[for="edad"]::before { content: "🔢"; }
-label[for="sexo"]::before { content: "⚧"; }
-
-label[for="telefonoEstudiante"]::before,
-label[for="telefonoResponsable"]::before,
-label[for="madreCelular"]::before,
-label[for="padreCelular"]::before { content: "📱"; }
-
-label[for="whatsappResponsable"]::before { content: "💬"; }
-
-label[for="correoEstudiantil"]::before,
-label[for="correoPersonal"]::before { content: "✉️"; }
-
+/* Marcadores geométricos para las etiquetas, sin iconos. */
+#matriculaForm .campo:not(.campo-foto) > label:not(.foto-label)::before {
+  content: "";
+  display: inline-block;
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: #377457;
+  box-shadow: 0 0 0 3px rgba(55,116,87,.12);
+}
+.tema-oscuro #matriculaForm .campo:not(.campo-foto) > label:not(.foto-label)::before {
+  background: #e7c77d;
+  box-shadow: 0 0 0 3px rgba(231,199,125,.12);
+}
 .campo input,
 .campo select {
   padding: 0.65rem 0.95rem;
@@ -1209,3 +1191,123 @@ body.tema-oscuro {
   #datosComprobante dd { text-align: left; }
   .acciones-comprobante button { width: 100%; min-height: 44px; }
 }
+
+/* Retoques discretos; no se cambian la fotografía ni sus controles. */
+@media screen {
+  body .form-card { background-image: none; box-shadow: 0 12px 32px rgba(7, 65, 48, .10); }
+  body .seccion h2 { border-image: none; border-bottom: 2px solid #a6cbb9; padding-bottom: .7rem; }
+  body.tema-oscuro .seccion h2 { border-bottom-color: #456a58; }
+  body .seccion h2::before { background: #17654e; box-shadow: 0 2px 5px rgba(0,0,0,.12); color: #fff; }
+  .distrito-nacimiento { margin-top: 1.2rem; }
+  .distrito-nacimiento label { display:block; }
+  #departamentoNacimiento, #lugarNacimiento { width:100%; }
+  #estadoBorrador[hidden] { display:none !important; }
+  body .campo:not(.campo-foto) > label { letter-spacing: .025em; }
+}
+
+/* Presentación sobria del formulario: superficies, jerarquía y legibilidad. */
+@media screen {
+  body { background: #eef3f1; }
+  body.tema-oscuro { background: #101a17; }
+  body .form-card { padding: 32px; border-radius: 0 0 24px 24px; background-image: none; }
+  body .form-card::before, body .form-card::after { display: none; }
+  body #matriculaForm { font-family: 'Segoe UI', Arial, sans-serif; }
+  body #matriculaForm .form-step { padding: 24px; border: 1px solid #dce7e1; border-radius: 16px; background: #f8fbf9; }
+  body.tema-oscuro #matriculaForm .form-step { background: #172720; border-color: #365044; }
+  body #matriculaForm .seccion h2 { font: 650 22px/1.35 'Segoe UI', Arial, sans-serif; letter-spacing: -.35px; padding: 0 0 16px; margin: 0 0 24px; border-bottom: 1px solid #d5e3da; color: #214b3a; }
+  body.tema-oscuro #matriculaForm .seccion h2 { color: #e2f2e9; border-color: #365044; }
+  body #matriculaForm .seccion h2:not(:first-child) { margin-top: 30px; }
+  body #matriculaForm .seccion h2::before { border-radius: 10px; width: 32px; height: 32px; font: 600 14px/1 'Segoe UI', Arial, sans-serif; background: #e1eee6; color: #225a40; box-shadow: none; }
+  body.tema-oscuro #matriculaForm .seccion h2::before { background: #2b493a; color: #d7f2e1; }
+  body #matriculaForm .campo:not(.campo-foto) > label { font: 600 13px/1.5 'Segoe UI', Arial, sans-serif; text-transform: none; letter-spacing: 0; margin-bottom: 7px; }
+  body #matriculaForm .campo > input:not([type=file]):not([type=checkbox]):not([type=radio]),
+  body #matriculaForm .campo > select,
+  body #matriculaForm .campo > textarea { font: 400 15px/1.45 'Segoe UI', Arial, sans-serif; min-height: 46px; padding: 11px 13px; border: 1px solid #b9cfc2; border-radius: 9px; background: #fff; color: #213c30; box-shadow: 0 1px 2px rgba(20,50,35,.025); }
+  body.tema-oscuro #matriculaForm .campo > input:not([type=file]):not([type=checkbox]):not([type=radio]),
+  body.tema-oscuro #matriculaForm .campo > select,
+  body.tema-oscuro #matriculaForm .campo > textarea { background: #102019; border-color: #54705f; color: #e4f1e9; }
+  body #matriculaForm .campo > input:read-only { background: #eaf1ed; }
+  body #matriculaForm .campo > input:focus-visible, body #matriculaForm .campo > select:focus-visible, body #matriculaForm .campo > textarea:focus-visible { outline: 3px solid rgba(38,137,96,.2); outline-offset: 2px; }
+  body .progreso-pequeno { margin-bottom: 24px; }
+  body .progreso-pequeno-relleno { background: #168565; }
+  body .progreso-pequeno-relleno::after { display:none; }
+  body .acciones-pasos { margin-top: 24px; padding-top: 20px; border-top: 1px solid #d5e3da; gap: 12px; }
+  body .acciones-pasos button { min-height: 44px; border-radius: 10px; padding: 11px 24px; font: 600 14px/1.4 'Segoe UI', Arial, sans-serif; box-shadow: none; }
+  body .acciones-pasos .btn-guardar { background: #08775c; color: #fff; }
+  body .acciones-pasos .btn-volver { background: #e7efe9; color: #28513d; }
+  body.tema-oscuro .acciones-pasos { border-color: #365044; }
+  body.tema-oscuro .acciones-pasos .btn-volver { background: #294336; color: #e4f1e9; }
+}
+@media screen and (max-width: 640px) {
+  body .form-card { padding: 16px 12px; }
+  body #matriculaForm .form-step { padding: 18px 12px; border-radius: 12px; }
+  body #matriculaForm .seccion h2 { font-size: 20px; }
+  body .acciones-pasos button { padding: 11px 18px; }
+}
+@media screen {
+  body.tema-oscuro #matriculaForm #bloqueSalud,
+  body.tema-oscuro #matriculaForm .fila-salud,
+  body.tema-oscuro #matriculaForm .fila-hermano { background: #1b3026; border-color: #456554; color: #e4f1e9; }
+  body.tema-oscuro #matriculaForm #bloqueSalud label,
+  body.tema-oscuro #matriculaForm #bloqueSalud .ayuda { color: #e4f1e9; }
+  body.tema-oscuro #btnAnterior { background: #294336 !important; color: #e4f1e9 !important; }
+}
+
+/* Color institucional: verde, menta y detalles dorados. */
+@media screen {
+  body { background: radial-gradient(ellipse at 8% 12%, #cbe7d9 0, transparent 48%), radial-gradient(ellipse at 94% 75%, #efe5c7 0, transparent 45%), #e9f2ed; }
+  body .form-card { background: linear-gradient(145deg, #eff8f1, #fbfaf1 80%); border-color: #b6d2c0; box-shadow: 0 18px 42px rgba(27,80,55,.14); }
+  body #matriculaForm .form-step { background: linear-gradient(135deg, #e3f2e8, #f4f8ec); border: 1px solid #bddbc7; border-top: 4px solid #208864; box-shadow: 0 6px 18px rgba(27,80,55,.05); }
+  body #matriculaForm .seccion h2 { background: linear-gradient(90deg, #cce8d8, rgba(204,232,216,.15)); border: 0; border-left: 4px solid #bd9639; border-radius: 4px 12px 12px 4px; padding: 12px 14px; color: #174e36; }
+  body #matriculaForm .seccion h2::before { background: #167452; color: #fff; box-shadow: 0 3px 8px rgba(18,89,59,.16); }
+  body .progreso-pequeno { background: #dceee2; border: 1px solid #b9d8c5; border-radius: 12px; padding: 13px 16px; }
+  body .progreso-pequeno-relleno { background: linear-gradient(90deg,#07684e,#32a878); }
+  body .reloj-esquina { background: #e5efda; border-color: #c4d6a9; }
+  body .acciones-pasos { background: #deeee2; border: 1px solid #bad7c5; padding: 16px; border-radius: 12px; }
+  body .acciones-pasos .btn-guardar { background: linear-gradient(110deg,#076d50,#20966c); box-shadow: 0 4px 10px rgba(16,104,73,.16); }
+  body .acciones-pasos .btn-guardar:hover { background: #085c44; }
+  body .acciones-pasos .btn-volver { background: #f5f8ec; border: 1px solid #aecab7; }
+  body.tema-oscuro { background: radial-gradient(ellipse at 10% 10%, #244637 0, transparent 50%), #101d18; }
+  body.tema-oscuro .form-card { background: linear-gradient(145deg,#14291f,#192b24); border-color:#3c604b; }
+  body.tema-oscuro #matriculaForm .form-step { background:linear-gradient(135deg,#1d3c2d,#21382e); border-color:#456b54; border-top-color:#61bd89; }
+  body.tema-oscuro #matriculaForm .seccion h2 { background:linear-gradient(90deg,#315b40,rgba(49,91,64,.15)); border-left-color:#d1b467; color:#e7f7eb; }
+  body.tema-oscuro #matriculaForm .seccion h2::before { background:#8dd0a5; color:#123d29; }
+  body.tema-oscuro .progreso-pequeno, body.tema-oscuro .acciones-pasos { background:#214332; border-color:#4e755c; }
+  body.tema-oscuro .progreso-pequeno-info { color:#e3f4e8; }
+  body.tema-oscuro .reloj-esquina { background:#293d2a; border-color:#647650; }
+}
+
+/* Arena cálida y verde bosque: títulos y campos con identidad propia. */
+@media screen {
+  body:not(.tema-oscuro) .form-card { background: #ffffff; }
+  body:not(.tema-oscuro) #matriculaForm .form-step { background: #ffffff; border-color: #bddbc7; border-top-color: #23694f; }
+  body #matriculaForm .seccion h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 27px; font-weight: 700; letter-spacing: -.4px; gap: 16px; padding: 16px; border-radius: 12px; }
+  body:not(.tema-oscuro) #matriculaForm .seccion h2 { background: #205c46; color: #fff1cf; border-left: 0; box-shadow: 0 4px 10px #174c3018; }
+  body #matriculaForm .seccion h2::before { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; font: 700 25px/1 Georgia, serif; background: #e7c77d; color: #204c38; border: 1px solid #f7dfa5; box-shadow: 0 0 0 4px #ffffff12; }
+  body:not(.tema-oscuro) #matriculaForm .campo > input:not([type=file]):not([type=checkbox]):not([type=radio]),
+  body:not(.tema-oscuro) #matriculaForm .campo > select,
+  body:not(.tema-oscuro) #matriculaForm .campo > textarea { background: #ffffff; border-color: #9eb39b; color: #203d2d; }
+  body:not(.tema-oscuro) #matriculaForm .campo > input:read-only { background: #d5dfca; }
+  body #matriculaForm .campo:not(.campo-foto) > label { font-size: 14px; font-weight: 600; line-height: 1.5; }
+  body #matriculaForm .seccion > p { font: 400 15px/1.65 'Segoe UI', Arial, sans-serif; }
+  body:not(.tema-oscuro) .progreso-pequeno,
+  body:not(.tema-oscuro) .acciones-pasos { background: #d4dfcb; border-color: #b4c4a5; }
+  body:not(.tema-oscuro) .reloj-esquina { background: #e3d3ac; border-color: #c8ad74; }
+  body.tema-oscuro #matriculaForm .seccion h2 { background: #284d3c; color: #f6e4b7; border-left: 0; }
+  body.tema-oscuro #matriculaForm .seccion h2::before { background: #e7c77d !important; color: #204c38; }
+}
+@media screen and (max-width: 640px) {
+  body #matriculaForm .seccion h2 { font-size: 23px; padding: 12px; gap: 12px; }
+  body #matriculaForm .seccion h2::before { flex-basis: 38px; width: 38px; height: 38px; font-size: 23px; }
+}
+
+.busqueda-lugar { position: relative; width: 100%; }
+.busqueda-lugar input { width: 100%; min-height:46px; font:inherit; }
+.busqueda-opciones { position:absolute; top:100%; left:0; right:0; z-index:50; max-height:220px; overflow:auto; background:#fff; color:#203d2d; border:1px solid #8fae9c; border-radius:9px; box-shadow:0 8px 20px #143c3026; }
+.busqueda-opciones [role=option], .busqueda-opciones p { padding:12px; margin:0; cursor:pointer; }
+.busqueda-opciones [role=option]:hover, .busqueda-opciones [aria-selected=true] { background:#dceee2; }
+.tema-oscuro .busqueda-opciones { background:#193729; color:#eff8f1; }
+.tema-oscuro .busqueda-opciones [role=option]:hover, .tema-oscuro .busqueda-opciones [aria-selected=true] { background:#315b40; }
+#matriculaForm select[hidden] { display:none; }
+
+#nacimientoSV[hidden], #nacimientoExterior[hidden] { display: none !important; }

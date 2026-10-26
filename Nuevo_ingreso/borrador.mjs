@@ -8,6 +8,11 @@ export async function iniciarBorrador({ form, foto, crearHermano, mostrarPaso, o
   let id = crypto.randomUUID();
   const aviso = document.createElement('p');
   aviso.id = 'estadoBorrador';
+  aviso.hidden = true;
+  // Mostrar únicamente fallos que puedan ocasionar pérdida del borrador.
+  new MutationObserver(() => {
+    aviso.hidden = !/^(No se puede|No se pudo|Los datos se guardaron, pero)/.test(aviso.textContent);
+  }).observe(aviso, {childList:true, characterData:true, subtree:true});
   aviso.setAttribute('role', 'status');
   aviso.setAttribute('aria-live', 'polite');
   form.prepend(aviso);
@@ -38,7 +43,7 @@ export async function iniciarBorrador({ form, foto, crearHermano, mostrarPaso, o
     if (restaurando || eliminado || finalizado()) return;
     try {
       const valores = Object.fromEntries(campos().map(el => [el.id, { valor:el.value, marcado:el.checked, auto:el.dataset.autollenadoResponsable === 'true' }]));
-      const hermanos = Array.from(form.querySelectorAll('.fila-hermano')).map(fila => ({ nombre:fila.querySelector('.hermano-nombre').value, grado:fila.querySelector('.hermano-grado').value }));
+      const hermanos = Array.from(form.querySelectorAll('.fila-hermano')).map(fila => ({ nombre:fila.querySelector('.hermano-nombre').value, grado:fila.querySelector('.hermano-grado').value, nie:fila.querySelector('.hermano-nie').value }));
       localStorage.setItem(CLAVE, JSON.stringify({ version:1, id, valores, hermanos, paso:obtenerPaso() }));
       aviso.textContent = db ? 'Borrador guardado en este navegador. Se recuperará al volver; se elimina al completar la matrícula.' : 'Texto guardado en este navegador. No se pudo guardar la fotografía.';
     } catch {
@@ -73,7 +78,11 @@ export async function iniciarBorrador({ form, foto, crearHermano, mostrarPaso, o
         if (!dato || typeof dato.valor !== 'string') return;
         el.value = dato.valor;
         if (el.id === 'conQuienVive') {
-          if (['Tío','Tía'].includes(dato.valor)) el.value = 'Tío/a';
+          if (['Tío','Tía','Tío/a'].includes(dato.valor)) el.value = 'Tía/o';
+          if (['Abuelo','Abuela'].includes(dato.valor)) el.value = 'Abuelo/a';
+        }
+        if (el.id === 'parentesco') {
+          if (['Tío','Tía','Tío/a'].includes(dato.valor)) el.value = 'Tía/o';
           if (['Abuelo','Abuela'].includes(dato.valor)) el.value = 'Abuelo/a';
         }
         if (['checkbox', 'radio'].includes(el.type)) el.checked = Boolean(dato.marcado);
@@ -94,6 +103,7 @@ export async function iniciarBorrador({ form, foto, crearHermano, mostrarPaso, o
           const fila = crearHermano();
           fila.querySelector('.hermano-nombre').value = typeof hermano.nombre === 'string' ? hermano.nombre : '';
           fila.querySelector('.hermano-grado').value = typeof hermano.grado === 'string' ? hermano.grado : '';
+          fila.querySelector('.hermano-nie').value = typeof hermano.nie === 'string' ? hermano.nie : '';
           lista.append(fila);
         }
       }

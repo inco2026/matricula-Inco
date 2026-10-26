@@ -1,80 +1,116 @@
-// buscador-nacimiento.js
-
-export const lugaresElSalvador = [
-  // DEPARTAMENTO DE AHUACHAPÁN
-  "Ahuachapán - Ahuachapán Centro", "Apaneca - Ahuachapán Centro", "Ataco - Ahuachapán Centro", "Concepción de Ataco - Ahuachapán Centro", "Tacuba - Ahuachapán Centro",
-  "San Francisco Menéndez - Ahuachapán Norte", "Jujutla - Ahuachapán Norte", "Guaymango - Ahuachapán Norte", "San Pedro Puxtla - Ahuachapán Norte",
-  "Atiquizaya - Ahuachapán Sur", "El Refugio - Ahuachapán Sur", "San Lorenzo - Ahuachapán Sur", "Turín - Ahuachapán Sur",
-  
-  // DEPARTAMENTO DE SANTA ANA
-  "Santa Ana - Santa Ana Centro", "Coatepeque - Santa Ana Este", "El Congo - Santa Ana Este",
-  "Masahuat - Santa Ana Norte", "Metapán - Santa Ana Norte", "Santa Rosa Guachipilín - Santa Ana Norte", "Texistepeque - Santa Ana Norte",
-  "Candelaria de la Frontera - Santa Ana Oeste", "Chalchuapa - Santa Ana Oeste", "El Porvenir - Santa Ana Oeste", "San Antonio Pajonal - Santa Ana Oeste", "San Sebastián Salitrillo - Santa Ana Oeste", "Santiago de la Frontera - Santa Ana Oeste",
-
-  // DEPARTAMENTO DE SONSONATE
-  "Sonsonate - Sonsonate Centro", "Nahuizalco - Sonsonate Centro", "San Antonio del Monte - Sonsonate Centro",
-  "Acajutla - Sonsonate Este", "Salcoatitán - Sonsonate Este", "Juayúa - Sonsonate Este", "Santa Catarina Masahuat - Sonsonate Este",
-  "Armenia - Sonsonate Norte", "Caluco - Sonsonate Norte", "Cuisnahuat - Sonsonate Norte", "Izalco - Sonsonate Norte", "San Julián - Sonsonate Norte", "Santa Isabel Ishuatán - Sonsonate Norte",
-  "Santo Domingo de Guzmán - Sonsonate Oeste", "Sonzacate - Sonsonate Oeste",
-
-  // DEPARTAMENTO DE CHALATENANGO
-  "Chalatenango - Chalatenango Centro", "Agua Caliente - Chalatenango Centro", "Dulce Nombre de María - Chalatenango Centro", "El Paraíso - Chalatenango Centro", "La Reina - Chalatenango Centro", "San Fernando - Chalatenango Centro", "San Francisco Morazán - Chalatenango Centro", "San Rafael - Chalatenango Centro", "Santa Rita - Chalatenango Centro", "Tejutla - Chalatenango Centro",
-  "Citalá - Chalatenango Norte", "La Palma - Chalatenango Norte", "San Ignacio - Chalatenango Norte",
-  "Arcatao - Chalatenango Sur", "Azacualpa - Chalatenango Sur", "Comalapa - Chalatenango Sur", "Concepción Quezaltepeque - Chalatenango Sur", "El Carrizal - Chalatenango Sur", "La Laguna - Chalatenango Sur", "Las Vueltas - Chalatenango Sur", "Nombre de Jesús - Chalatenango Sur", "Nueva Concepción - Chalatenango Sur", "Nueva Trinidad - Chalatenango Sur", "Ojos de Agua - Chalatenango Sur", "Potonico - Chalatenango Sur", "San Antonio de la Cruz - Chalatenango Sur", "San Antonio Los Ranchos - Chalatenango Sur", "San Isidro Labrador - Chalatenango Sur", "San José Cancasque - Chalatenango Sur", "San José Las Flores - Chalatenango Sur", "San Luis del Carmen - Chalatenango Sur", "San Miguel de Mercedes - Chalatenango Sur",
-
-  // DEPARTAMENTO DE CUSCATLÁN
-  "Cojutepeque - Cuscatlán Norte", "Candelaria - Cuscatlán Norte", "El Carmen - Cuscatlán Norte", "El Rosario - Cuscatlán Norte", "Monte San Juan - Cuscatlán Norte", "Oratorio de Concepción - Cuscatlán Norte", "San Bartolomé Perulapía - Cuscatlán Norte", "San Cristóbal - Cuscatlán Norte", "San José Guayabal - Cuscatlán Norte", "San Pedro Perulapán - Cuscatlán Norte", "San Rafael Cedros - Cuscatlán Norte", "Santa Cruz Analquito - Cuscatlán Norte", "Santa Cruz Michapa - Cuscatlán Norte", "Suchitoto - Cuscatlán Norte", "Tenancingo - Cuscatlán Norte",
-  "Cuscatlán - Cuscatlán Sur", "El Carmen - Cuscatlán Sur", "San Rafael Cedros - Cuscatlán Sur", "Santa Cruz Michapa - Cuscatlán Sur",
-
-  // DEPARTAMENTO DE LA LIBERTAD
-  "Santa Tecla - La Libertad Sur", "Comasagua - La Libertad Sur",
-  "Antiguo Cuscatlán - La Libertad Este", "Nuevo Cuscatlán - La Libertad Este", "San José Villanueva - La Libertad Este", "Zaragoza - La Libertad Este", "Huizúcar - La Libertad Este",
-  "Quezaltepeque - La Libertad Norte", "San Matías - La Libertad Norte", "San Pablo Tacachico - La Libertad Norte",
-  "San Juan Opico - La Libertad Centro", "Ciudad Arce - La Libertad Centro",
-  "Colón - La Libertad Oeste", "Jayaque - La Libertad Oeste", "Sacacoyo - La Libertad Oeste", "Tepecoyo - La Libertad Oeste", "Talnique - La Libertad Oeste",
-  "Chiltiupán - La Libertad Costa", "Jicalapa - La Libertad Costa", "La Libertad - La Libertad Costa", "Tamanique - La Libertad Costa", "Teotepeque - La Libertad Costa",
-
-  // DEPARTAMENTO DE SAN SALVADOR
-  "San Salvador - San Salvador Centro", "Ayutuxtepeque - San Salvador Centro", "Mejicanos - San Salvador Centro", "Cuscatancingo - San Salvador Centro", "Ciudad Delgado - San Salvador Centro",
-  "Aguilares - San Salvador Norte", "El Paisnal - San Salvador Norte", "Guazapa - San Salvador Norte",
-  "Apopa - San Salvador Oeste", "Nejapa - San Salvador Oeste",
-  "Ilopango - San Salvador Este", "San Martín - San Salvador Este", "Soyapango - San Salvador Este", "Tonacatepeque - San Salvador Este",
-  "Panchimalco - San Salvador Sur", "Rosario de Mora - San Salvador Sur", "San Marcos - San Salvador Sur", "Santo Tomás - San Salvador Sur", "Santiago Texacuangos - San Salvador Sur",
-
-  // DEPARTAMENTO DE LA PAZ
-  "Zacatecoluca - La Paz Centro", "San Juan Nonualco - La Paz Centro", "San Rafael Obrajuelo - La Paz Centro", "Santa María Ostuma - La Paz Centro", "San Pedro Nonualco - La Paz Centro",
-  "Olocuilta - La Paz Este", "San Juan Talpa - La Paz Este", "San Luis Talpa - La Paz Este", "San Miguel Tepezontes - La Paz Este", "San Francisco Chinameca - La Paz Este", "Cuyultitán - La Paz Este", "El Rosario - La Paz Este", "Jerusalén - La Paz Este", "Paraíso de Osorio - La Paz Este", "San Antonio Masahuat - La Paz Este", "San Emigdio - La Paz Este", "San Juan Tepezontes - La Paz Este", "San Pedro Masahuat - La Paz Este", "Tapalhuaca - La Paz Este",
-  "Santiago Nonualco - La Paz Oeste", "San Juan Nonualco - La Paz Oeste", "San Rafael Obrajuelo - La Paz Oeste",
-
-  // DEPARTAMENTO DE CABAÑAS
-  "Sensuntepeque - Cabañas Este", "Dolores - Cabañas Este", "Guacotecti - Cabañas Este", "San Isidro - Cabañas Este", "Victoria - Cabañas Este",
-  "Ilobasco - Cabañas Oeste", "Cinquera - Cabañas Oeste", "Jutiapa - Cabañas Oeste", "Tejutepeque - Cabañas Oeste",
-
-  // DEPARTAMENTO DE SAN VICENTE
-  "San Vicente - San Vicente Norte", "Apastepeque - San Vicente Norte", "Santa Clara - San Vicente Norte", "San Ildefonso - San Vicente Norte", "San Esteban Catarina - San Vicente Norte", "San Lorenzo - San Vicente Norte", "San Sebastián - San Vicente Norte", "Santo Domingo - San Vicente Norte",
-  "Tecoluca - San Vicente Sur", "San Cayetano Istepeque - San Vicente Sur", "Tepetitán - San Vicente Sur", "Verapaz - San Vicente Sur", "Guadalupe - San Vicente Sur",
-
-  // DEPARTAMENTO DE USULUTÁN
-  "Usulután - Usulután Norte", "Jucuapa - Usulután Norte", "Nueva Guadalupe - Usulután Norte", "Santa Elena - Usulután Norte", "Santiago de María - Usulután Norte", "Alegría - Usulután Norte", "Berlín - Usulután Norte", "California - Usulután Norte", "Concepción Batres - Usulután Norte", "Ereguayquín - Usulután Norte", "Jucuarán - Usulután Norte", "Ozatlán - Usulután Norte", "San Dionisio - Usulután Norte", "Santa María - Usulután Norte", "Tecapán - Usulután Norte",
-  "Jiquilisco - Usulután Oeste", "Puerto El Triunfo - Usulután Oeste", "San Agustín - Usulután Oeste", "San Francisco Javier - Usulután Oeste",
-
-  // DEPARTAMENTO DE SAN MIGUEL
-  "San Miguel - San Miguel Centro", "Comacarán - San Miguel Centro", "Uluazapa - San Miguel Centro", "Moncagua - San Miguel Centro", "Quelepa - San Miguel Centro", "Chirilagua - San Miguel Centro",
-  "Ciudad Barrios - San Miguel Norte", "Sesori - San Miguel Norte", "Nuevo Edén de San Juan - San Miguel Norte", "San Gerardo - San Miguel Norte", "San Luis de La Reina - San Miguel Norte", "Carolina - San Miguel Norte", "San Antonio del Mosco - San Miguel Norte", "Chapeltique - San Miguel Norte",
-  "Chinameca - San Miguel Oeste", "Nueva Guadalupe - San Miguel Oeste", "Lolotique - San Miguel Oeste", "San Jorge - San Miguel Oeste", "San Rafael Oriente - San Miguel Oeste", "El Tránsito - San Miguel Oeste",
-
-  // DEPARTAMENTO DE MORAZÁN
-  "San Francisco Gotera - Morazán Norte", "Cacaopera - Morazán Norte", "Corinto - Morazán Norte", "El Rosario - Morazán Norte", "Jocoaitique - Morazán Norte", "Meanguera - Morazán Norte", "Perquín - Morazán Norte", "San Fernando - Morazán Norte", "Torola - Morazán Norte",
-  "Arambala - Morazán Sur", "Cacaopera - Morazán Sur", "Chilanga - Morazán Sur", "Delicias de Concepción - Morazán Sur", "El Divisadero - Morazán Sur", "Gualococti - Morazán Sur", "Guatajiagua - Morazán Sur", "Joateca - Morazán Sur", "Jocoro - Morazán Sur", "Lolotiquillo - Morazán Sur", "Osicala - Morazán Sur", "San Carlos - Morazán Sur", "San Isidro - Morazán Sur", "San Simón - Morazán Sur", "Sensembra - Morazán Sur", "Sociedad - Morazán Sur", "Yamabal - Morazán Sur", "Yoloaiquín - Morazán Sur",
-
-  // DEPARTAMENTO DE LA UNIÓN
-  "La Unión - La Unión Norte", "Anamorós - La Unión Norte", "Bolívar - La Unión Norte", "Concepción de Oriente - La Unión Norte", "El Sauce - La Unión Norte", "Lislique - La Unión Norte", "Nueva Esparta - La Unión Norte", "Pasaquina - La Unión Norte", "Polorós - La Unión Norte", "San José La Fuente - La Unión Norte", "Santa Rosa de Lima - La Unión Norte",
-  "Conchagua - La Unión Sur", "El Carmen - La Unión Sur", "Intipucá - La Unión Sur", "La Unión - La Unión Sur", "Meanguera del Golfo - La Unión Sur", "San Alejo - La Unión Sur", "Yayantique - La Unión Sur", "Yucuaiquín - La Unión Sur"
-];
+import { territorioSV } from './territorio-sv.mjs';
+const lugaresElSalvador = territorioSV.map(l => `${l.distrito} - ${l.municipio}`);
+const lugaresAnteriores = {
+  "Ataco - Ahuachapán Centro": "Concepción de Ataco - Ahuachapán Centro",
+  "San Francisco Menéndez - Ahuachapán Norte": "San Francisco Menéndez - Ahuachapán Sur",
+  "Jujutla - Ahuachapán Norte": "Jujutla - Ahuachapán Sur",
+  "Guaymango - Ahuachapán Norte": "Guaymango - Ahuachapán Sur",
+  "San Pedro Puxtla - Ahuachapán Norte": "San Pedro Puxtla - Ahuachapán Sur",
+  "Atiquizaya - Ahuachapán Sur": "Atiquizaya - Ahuachapán Norte",
+  "El Refugio - Ahuachapán Sur": "El Refugio - Ahuachapán Norte",
+  "San Lorenzo - Ahuachapán Sur": "San Lorenzo - Ahuachapán Norte",
+  "Turín - Ahuachapán Sur": "Turín - Ahuachapán Norte",
+  "Santiago de la Frontera - Santa Ana Oeste": "Santiago de La Frontera - Santa Ana Oeste",
+  "Nahuizalco - Sonsonate Centro": "Nahuizalco - Sonsonate Norte",
+  "Acajutla - Sonsonate Este": "Acajutla - Sonsonate Oeste",
+  "Salcoatitán - Sonsonate Este": "Salcoatitán - Sonsonate Norte",
+  "Juayúa - Sonsonate Este": "Juayúa - Sonsonate Norte",
+  "Santa Catarina Masahuat - Sonsonate Este": "Santa Catarina Masahuat - Sonsonate Norte",
+  "Armenia - Sonsonate Norte": "Armenia - Sonsonate Este",
+  "Caluco - Sonsonate Norte": "Caluco - Sonsonate Este",
+  "Cuisnahuat - Sonsonate Norte": "Cuisnahuat - Sonsonate Este",
+  "Izalco - Sonsonate Norte": "Izalco - Sonsonate Este",
+  "San Julián - Sonsonate Norte": "San Julián - Sonsonate Este",
+  "Santa Isabel Ishuatán - Sonsonate Norte": "Santa Isabel Ishuatán - Sonsonate Este",
+  "Santo Domingo de Guzmán - Sonsonate Oeste": "Santo Domingo de Guzmán - Sonsonate Centro",
+  "Sonzacate - Sonsonate Oeste": "Sonzacate - Sonsonate Centro",
+  "Chalatenango - Chalatenango Centro": "Chalatenango - Chalatenango Sur",
+  "Nueva Concepción - Chalatenango Sur": "Nueva Concepción - Chalatenango Centro",
+  "San Antonio de la Cruz - Chalatenango Sur": "San Antonio de La Cruz - Chalatenango Sur",
+  "Cojutepeque - Cuscatlán Norte": "Cojutepeque - Cuscatlán Sur",
+  "Candelaria - Cuscatlán Norte": "Candelaria - Cuscatlán Sur",
+  "El Carmen - Cuscatlán Norte": "El Carmen - Cuscatlán Sur",
+  "El Rosario - Cuscatlán Norte": "El Rosario - Cuscatlán Sur",
+  "Monte San Juan - Cuscatlán Norte": "Monte San Juan - Cuscatlán Sur",
+  "San Cristóbal - Cuscatlán Norte": "San Cristóbal - Cuscatlán Sur",
+  "San Rafael Cedros - Cuscatlán Norte": "San Rafael Cedros - Cuscatlán Sur",
+  "Santa Cruz Analquito - Cuscatlán Norte": "Santa Cruz Analquito - Cuscatlán Sur",
+  "Santa Cruz Michapa - Cuscatlán Norte": "Santa Cruz Michapa - Cuscatlán Sur",
+  "Tenancingo - Cuscatlán Norte": "Tenancingo - Cuscatlán Sur",
+  "Zacatecoluca - La Paz Centro": "Zacatecoluca - La Paz Este",
+  "San Juan Nonualco - La Paz Centro": "San Juan Nonualco - La Paz Este",
+  "San Rafael Obrajuelo - La Paz Centro": "San Rafael Obrajuelo - La Paz Este",
+  "Olocuilta - La Paz Este": "Olocuilta - La Paz Oeste",
+  "San Juan Talpa - La Paz Este": "San Juan Talpa - La Paz Oeste",
+  "San Luis Talpa - La Paz Este": "San Luis Talpa - La Paz Oeste",
+  "San Miguel Tepezontes - La Paz Este": "San Miguel Tepezontes - La Paz Centro",
+  "San Francisco Chinameca - La Paz Este": "San Francisco Chinameca - La Paz Oeste",
+  "Cuyultitán - La Paz Este": "Cuyultitán - La Paz Oeste",
+  "El Rosario - La Paz Este": "El Rosario - La Paz Centro",
+  "Jerusalén - La Paz Este": "Jerusalén - La Paz Centro",
+  "Paraíso de Osorio - La Paz Este": "Paraíso de Osorio - La Paz Centro",
+  "San Antonio Masahuat - La Paz Este": "San Antonio Masahuat - La Paz Centro",
+  "San Emigdio - La Paz Este": "San Emigdio - La Paz Centro",
+  "San Juan Tepezontes - La Paz Este": "San Juan Tepezontes - La Paz Centro",
+  "San Pedro Masahuat - La Paz Este": "San Pedro Masahuat - La Paz Oeste",
+  "Tapalhuaca - La Paz Este": "Tapalhuaca - La Paz Oeste",
+  "Santiago Nonualco - La Paz Oeste": "Santiago Nonualco - La Paz Centro",
+  "San Juan Nonualco - La Paz Oeste": "San Juan Nonualco - La Paz Este",
+  "San Rafael Obrajuelo - La Paz Oeste": "San Rafael Obrajuelo - La Paz Este",
+  "San Vicente - San Vicente Norte": "San Vicente - San Vicente Sur",
+  "Usulután - Usulután Norte": "Usulután - Usulután Este",
+  "Santa Elena - Usulután Norte": "Santa Elena - Usulután Este",
+  "California - Usulután Norte": "California - Usulután Este",
+  "Concepción Batres - Usulután Norte": "Concepción Batres - Usulután Este",
+  "Ereguayquín - Usulután Norte": "Ereguayquín - Usulután Este",
+  "Jucuarán - Usulután Norte": "Jucuarán - Usulután Este",
+  "Ozatlán - Usulután Norte": "Ozatlán - Usulután Este",
+  "San Dionisio - Usulután Norte": "San Dionisio - Usulután Este",
+  "Santa María - Usulután Norte": "Santa María - Usulután Este",
+  "Tecapán - Usulután Norte": "Tecapán - Usulután Este",
+  "San Francisco Gotera - Morazán Norte": "San Francisco Gotera - Morazán Sur",
+  "Arambala - Morazán Sur": "Arambala - Morazán Norte",
+  "Cacaopera - Morazán Sur": "Cacaopera - Morazán Norte",
+  "Joateca - Morazán Sur": "Joateca - Morazán Norte",
+  "San Isidro - Morazán Sur": "San Isidro - Morazán Norte",
+  "La Unión - La Unión Norte": "La Unión - La Unión Sur"
+};
 
 export function iniciarBuscadorNacimiento() {
   const input = document.getElementById("lugarNacimiento");
   if (!input) return;
+  const departamento = document.getElementById('departamentoNacimiento');
+  if (departamento) {
+    const departamentos = ['Ahuachapán','Santa Ana','Sonsonate','Chalatenango','La Libertad','San Salvador','Cuscatlán','La Paz','Cabañas','San Vicente','Usulután','San Miguel','Morazán','La Unión'];
+    const departamentoDe = lugar => departamentos.find(d => lugar.split(' - ')[1]?.startsWith(d));
+    const llenar = (lugares) => {
+      input.replaceChildren(new Option('Seleccione el distrito', ''));
+      input.options[0].disabled = true;
+      for (const lugar of [...new Set(lugares)]) input.add(new Option(lugar, lugar));
+      input.value = '';
+    };
+    departamentos.forEach(d => departamento.add(new Option(d,d)));
+    llenar(lugaresElSalvador);
+    // Opciones internas solo para recuperar borradores del catálogo anterior.
+    Object.keys(lugaresAnteriores).forEach(valor => {
+      const opcion = new Option(valor, valor); opcion.disabled = true; opcion.hidden = true; input.add(opcion);
+    });
+    departamento.addEventListener('change', () => {
+      llenar(lugaresElSalvador.filter(l => departamentoDe(l) === departamento.value));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+    document.addEventListener('restaurar-nacimiento', () => {
+      const lugar = lugaresAnteriores[input.value] || input.value;
+      if (lugar) departamento.value = departamentoDe(lugar) || '';
+      llenar(lugaresElSalvador.filter(l => departamentoDe(l) === departamento.value));
+      input.value = lugar;
+    });
+    const syncDepartamento = crearBusqueda(departamento, 'Departamento');
+    const syncDistrito = crearBusqueda(input, 'Distrito');
+    departamento.addEventListener('change', syncDistrito);
+    document.addEventListener('restaurar-nacimiento', () => { syncDepartamento(); syncDistrito(); });
+    return;
+  }
 
   const contenedor = input.closest('.campo');
   if (!contenedor) return;
@@ -195,4 +231,76 @@ export function validarLugarNacimiento(input) {
     return "Por favor, seleccione un lugar válido de la lista.";
   }
   return ""; // Retorna vacío si es válido
+}
+
+// La búsqueda es visual; los valores guardados siguen siendo los del catálogo.
+function crearBusqueda(select, titulo) {
+  const caja = document.createElement('div');
+  caja.className = 'busqueda-lugar';
+  const texto = document.createElement('input');
+  texto.id = select.id + 'Busqueda';
+  texto.dataset.selectOrigen = select.id;
+  texto.placeholder = 'Buscar ' + titulo.toLowerCase();
+  texto.autocomplete = 'off';
+  texto.required = true;
+  texto.setAttribute('role', 'combobox');
+  texto.setAttribute('aria-autocomplete', 'list');
+  texto.setAttribute('aria-expanded', 'false');
+  const lista = document.createElement('div');
+  lista.id = texto.id + 'Opciones';
+  lista.className = 'busqueda-opciones';
+  lista.setAttribute('role', 'listbox');
+  lista.hidden = true;
+  texto.setAttribute('aria-controls', lista.id);
+  const etiqueta = document.querySelector(`label[for="${select.id}"]`);
+  if (etiqueta) etiqueta.htmlFor = texto.id;
+  select.hidden = true;
+  select.after(caja);
+  caja.append(texto, lista);
+  const cerrar = () => { lista.hidden = true; texto.setAttribute('aria-expanded', 'false'); };
+  const normalizar = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  let indice = -1;
+  const elegir = opcion => {
+    select.value = opcion.value;
+    texto.value = opcion.text;
+    select.dispatchEvent(new Event('change', {bubbles:true}));
+    texto.dispatchEvent(new Event('change', {bubbles:true}));
+    cerrar();
+  };
+  const mostrar = () => {
+    lista.replaceChildren(); indice = -1;
+    const opciones = [...select.options].filter(o => o.value && !o.disabled && !o.hidden && normalizar(o.text).includes(normalizar(texto.value)));
+    opciones.forEach((opcion, i) => {
+      const item = document.createElement('div');
+      item.id = lista.id + i; item.setAttribute('role', 'option');
+      item.textContent = opcion.text;
+      item.addEventListener('mousedown', e => e.preventDefault());
+      item.addEventListener('click', () => elegir(opcion));
+      lista.append(item);
+    });
+    if (!opciones.length) { const aviso = document.createElement('p'); aviso.textContent = 'No hay coincidencias. Busque otra opción.'; lista.append(aviso); }
+    lista.hidden = false; texto.setAttribute('aria-expanded', 'true');
+    texto.onkeydown = e => {
+      if (e.key === 'Escape') cerrar();
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!opciones.length) return;
+        indice = (indice + (e.key === 'ArrowDown' ? 1 : -1) + opciones.length) % opciones.length;
+        [...lista.children].forEach((n,i) => n.setAttribute('aria-selected', String(i === indice)));
+        texto.setAttribute('aria-activedescendant', lista.children[indice].id);
+        lista.children[indice].scrollIntoView({block:'nearest'});
+      }
+      if (e.key === 'Enter' && !lista.hidden) { e.preventDefault(); if (indice >= 0) elegir(opciones[indice]); }
+    };
+  };
+  texto.addEventListener('input', () => {
+    select.value = '';
+    select.dispatchEvent(new Event('change', {bubbles:true}));
+    mostrar();
+  });
+  texto.addEventListener('focus', mostrar);
+  texto.addEventListener('blur', cerrar);
+  const sincronizar = () => { texto.value = select.value ? select.selectedOptions[0].text : ''; cerrar(); };
+  select.addEventListener('change', () => { if (select.value) sincronizar(); });
+  return sincronizar;
 }

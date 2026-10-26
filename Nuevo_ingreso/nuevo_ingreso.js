@@ -1,5 +1,6 @@
-import { iniciarBuscadorNacimiento, validarLugarNacimiento } from './buscador-nacimiento.js';
-import { iniciarBorrador } from './borrador.mjs?v=3';
+import { iniciarPaisNacimiento, nacimientoParaGuardar } from './pais-nacimiento.mjs';
+import { iniciarBuscadorNacimiento, validarLugarNacimiento } from './buscador-nacimiento.js?v=4';
+import { iniciarBorrador } from './borrador.mjs?v=5';
 import { descargarComprobantePDF as descargarPDFCompleto } from './comprobante-pdf.js';
 import { TELEFONOS_SV } from './telefonos-sv.js?v=2';
 import { crearFichaAleatoria, fichaDelAnioSiguiente } from './ficha-aleatoria.mjs';
@@ -14,6 +15,7 @@ import {
 ========================================================= */
 const form = document.getElementById("matriculaForm");
 iniciarBuscadorNacimiento();
+iniciarPaisNacimiento();
 const mensajeExito = document.getElementById("mensajeExito");
 
 const numeroFicha = document.getElementById("numeroFicha");
@@ -228,6 +230,9 @@ function campoAplicable(el) {
 }
 
 function validarContenido(el, valor) {
+  if (el.id === 'nacimientoExtranjero') return errorTextoDescriptivo(valor, { maximo: 100 });
+  const duplicadoIdentidad = errorDuplicadoContacto(el, valor);
+  if (duplicadoIdentidad) return duplicadoIdentidad;
   if (el.id === 'especialidad' && grado?.value === 'Tercer Año' && valor === 'Bachillerato General') return 'Bachillerato General no está disponible para Tercer Año.';
   if (el.id === 'correoResponsable' && valor.split('@')[0].length > 15) return 'Use máximo 15 caracteres antes de @; el dominio no cuenta.';
   if (['madreDui', 'padreDui'].includes(el.id)) {
@@ -317,6 +322,10 @@ function validarCampo(el, incluirPasoOculto = false) {
     mensaje = "Este NIE ya se encuentra registrado en el sistema.";
   }
 
+  if (el.dataset.selectOrigen && !document.getElementById(el.dataset.selectOrigen)?.value) {
+    valido = false; mensaje = 'Seleccione una opción de la lista de resultados.';
+  }
+
   if (valido && valor) {
     mensaje = validarContenido(el, valor);
     valido = !mensaje;
@@ -336,7 +345,30 @@ function validarCampo(el, incluirPasoOculto = false) {
   return valido;
 }
 
+function camposPadre(prefijo) {
+  return Array.from(document.querySelectorAll(`#bloqueDatos${prefijo === 'madre' ? 'Madre' : 'Padre'} input`));
+}
+function actualizarObligatoriosPadres() {
+  const madre = camposPadre('madre'), padre = camposPadre('padre');
+  const tieneMadre = madre.some(c => c.value.trim()), tienePadre = padre.some(c => c.value.trim());
+  for (const [campos, activo] of [[madre,tieneMadre],[padre,tienePadre]]) {
+    campos.forEach(c => { c.required = activo || (!tieneMadre && !tienePadre && c.id.endsWith('Nombre')); if (!c.required && !c.value) limpiarError(c); });
+  }
+}
+function errorDuplicadoContacto(el, valor) {
+  const duis = ['duiEstudiante','duiResponsable','madreDui','padreDui'];
+  const ids = duis.includes(el.id) ? duis : Object.keys(TELEFONOS_SV).includes(el.id) ? Object.keys(TELEFONOS_SV) : [];
+  const parentesco = document.getElementById('parentesco')?.value;
+  const persona = id => {
+    if (id.includes('Responsable')) return parentesco === 'Mamá' ? 'madre' : parentesco === 'Papá' ? 'padre' : 'responsable';
+    return id.startsWith('madre') ? 'madre' : id.startsWith('padre') ? 'padre' : 'estudiante';
+  };
+  const numero = valor.replace(/\D/g,'');
+  if (numero && ids.some(id => id !== el.id && persona(id) !== persona(el.id) && document.getElementById(id)?.value.replace(/\D/g,'') === numero)) return 'Este número ya está usado por otra persona en el formulario.';
+  return '';
+}
 function validarPaso(numeroPaso, incluirPasoOculto = false) {
+  actualizarObligatoriosPadres();
   const seccion = document.querySelector(`.form-step[data-step="${numeroPaso}"]`);
   if (!seccion) return true;
 
@@ -401,6 +433,7 @@ function esCampoNombre(el) {
   return ['primerNombre', 'segundoNombre', 'primerApellido', 'segundoApellido', 'responsable', 'madreNombre', 'padreNombre'].includes(el.id) || el.classList.contains('hermano-nombre');
 }
 function entradaNumericaInvalida(el, texto) {
+  if (el.classList.contains('hermano-nie')) return /[^0-9]/u.test(texto);
   if (['nie', 'partidaNumero', 'folio', 'tomo', 'libro'].includes(el.id)) return /[^0-9]/u.test(texto);
   if (['duiEstudiante', 'duiResponsable', 'madreDui', 'padreDui'].includes(el.id)) return /[^0-9-]/u.test(texto);
   if (el.id === 'distanciaKm') return /[^0-9.]/u.test(texto);
@@ -480,6 +513,17 @@ form.querySelectorAll('input[type="email"]').forEach(el => {
   el.setAttribute('spellcheck', 'false');
 });
 const todosLosCampos = form.querySelectorAll("input, select, textarea");
+['input','change'].forEach(evento => form.addEventListener(evento, e => {
+  actualizarObligatoriosPadres();
+  if (e.target.classList.contains('hermano-input')) validarHermanos();
+  if (Object.keys(TELEFONOS_SV).includes(e.target.id) || /Dui|dui|parentesco/.test(e.target.id)) {
+    for (const id of [...Object.keys(TELEFONOS_SV),'duiEstudiante','duiResponsable','madreDui','padreDui']) {
+      const campo = document.getElementById(id);
+      if (campo?.value) validarCampo(campo);
+    }
+  }
+  if (!guardando && !guardado && mensajeExito) { mensajeExito.textContent = ''; mensajeExito.removeAttribute('role'); }
+}));
 todosLosCampos.forEach((el) => {
   if (el.type === "submit" || el.type === "button" || el.type === "file") return;
   el.addEventListener("input", () => validarCampo(el));
@@ -900,6 +944,10 @@ function crearFilaHermano() {
         <option value="Tercer Año">Tercer Año</option>
       </select>
     </div>
+    <div class="campo hermano-campo-nie">
+      <label for="nieHermano_${idSufijo}">NIE</label>
+      <input id="nieHermano_${idSufijo}" name="niesHermanos[]" class="hermano-input hermano-nie" inputmode="numeric" maxlength="12" pattern="[0-9]{7,12}" placeholder="NIE del hermano/a" />
+    </div>
     <button type="button" class="btn-hermano-quitar" title="Quitar este hermano" aria-label="Quitar este hermano">✕</button>
   `;
 
@@ -961,12 +1009,16 @@ function validarHermanos() {
   filas.forEach((fila) => {
     const nombre = fila.querySelector(".hermano-nombre");
     const gradoH = fila.querySelector(".hermano-grado");
+    const nieH = fila.querySelector('.hermano-nie');
+    const nieInvalido = !/^[0-9]{7,12}$/.test(nieH.value) || /^0+$/.test(nieH.value) || nieH.value === nie.value || Array.from(filas).some(otra => otra !== fila && otra.querySelector('.hermano-nie').value === nieH.value);
+    [nombre,gradoH,nieH].forEach(c => c.style.borderColor = '');
     const nombreVacio = !nombre.value.trim() || Boolean(errorNombre(nombre.value, 50));
     const gradoVacio = !gradoH.value.trim() || !Array.from(gradoH.options).some(o => o.value === gradoH.value && !o.disabled);
     const clave = normalizarTexto(nombre.value).toLocaleLowerCase('es');
     const duplicado = Array.from(filas).some(otra => otra !== fila && normalizarTexto(otra.querySelector('.hermano-nombre').value).toLocaleLowerCase('es') === clave);
 
-    if (nombreVacio || gradoVacio || duplicado) {
+    if (nombreVacio || gradoVacio || duplicado || nieInvalido) {
+      if (nieInvalido) nieH.style.borderColor = 'red';
       valido = false;
       fila.classList.add("fila-hermano-invalida");
       if (nombreVacio || duplicado) { nombre.style.borderColor = "red"; }
@@ -981,7 +1033,7 @@ function validarHermanos() {
   if (avisoHermanos) {
     avisoHermanos.textContent = valido
       ? ""
-      : "Revise nombres y grados de los hermanos. No repita al mismo hermano; puede eliminar filas con “✕”.";
+      : "Revise nombre, grado y NIE (7 a 12 dígitos) de cada hermano. No repita nombres ni NIE, incluido el del estudiante.";
     avisoHermanos.style.display = valido ? "none" : "block";
   }
 
@@ -1021,6 +1073,7 @@ function configurarCamposHermanos() {
         lista.appendChild(crearFilaHermano());
       }
       actualizarEstadoBotonesHermanos();
+      actualizarObligatoriosPadres();
     } else {
       bloqueHermanos.style.display = "none";
       limpiarHermanos();
@@ -1447,6 +1500,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     form.inert = true;
     try {
       controladorBorrador = await iniciarBorrador({ form, foto:fotoInput, crearHermano:crearFilaHermano, mostrarPaso, obtenerPaso:() => pasoActual, finalizado:() => guardado });
+      document.dispatchEvent(new Event('restaurar-nacimiento'));
+      actualizarObligatoriosPadres();
       actualizarEstadoBotonesHermanos();
       actualizarEstadoBotonesSalud();
       actualizarEspecialidades();
@@ -1479,7 +1534,7 @@ if (form) {
     });
 
     const lugar = document.getElementById("lugarNacimiento");
-    if (lugar && validarLugarNacimiento(lugar)) {
+    if (lugar && !lugar.disabled && validarLugarNacimiento(lugar)) {
       mostrarPaso(1);
       validarCampo(lugar);
       lugar.focus();
@@ -1548,15 +1603,21 @@ if (form) {
       }
     });
 
+    data.lugarNacimiento = nacimientoParaGuardar();
+    data.paisNacimiento = document.getElementById('paisNacimiento').selectedOptions[0].text;
+
     // Hermanos: se arman como lista de objetos { nombre, grado }
     const tieneHermanos = formData.get('hermanosCentroeducativo') === 'Sí';
     const nombresHermanos = tieneHermanos ? formData.getAll("nombresHermanos[]").map(v => normalizarTexto(v)) : [];
     const gradosHermanos = tieneHermanos ? formData.getAll("gradosHermanos[]").map(v => v.trim()) : [];
+    const niesHermanos = tieneHermanos ? formData.getAll('niesHermanos[]').map(v => v.trim()) : [];
     const hermanos = nombresHermanos
-      .map((nombreH, i) => ({ nombre: nombreH, grado: gradosHermanos[i] || "" }))
+      .map((nombreH, i) => ({ nombre: nombreH, grado: gradosHermanos[i] || "", nie: niesHermanos[i] || "" }))
       .filter(h => h.nombre || h.grado);
     if (hermanos.length) {
       data.hermanos = hermanos;
+      // Compatibilidad con el campo de texto usado por las consultas existentes.
+      data.nombresHermanos = hermanos.map(h => `${h.nombre} — ${h.grado} — NIE: ${h.nie}`).join('; ');
     }
 
     // Condiciones de salud: se arman como lista de objetos { enfermedad, medicamento, otros }
@@ -1886,8 +1947,8 @@ function configurarConQuienVive() {
         limpiarError(conQuienViveOtro);
       }
     }
-    // Las preguntas sobre la Madre y el Padre siempre se muestran y son
-    // siempre obligatorias, sin importar con quién viva el estudiante.
+    // Ambos bloques permanecen disponibles; basta completar uno de los padres.
+    actualizarObligatoriosPadres();
     actualizarBarraProgreso(pasoActual);
   };
   conQuienVive.addEventListener("change", actualizar);
