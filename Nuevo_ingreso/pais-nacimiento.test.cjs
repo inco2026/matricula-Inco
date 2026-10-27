@@ -22,6 +22,13 @@ test('país, búsqueda local, nacimiento exterior y recuperación del borrador',
   await page.goto(`http://127.0.0.1:${server.address().port}/${name}`);
   await page.waitForFunction(()=>document.querySelector('form').dataset.borradorListo==='true');
   assert.equal(await page.locator('#paisNacimiento').inputValue(),'SV');
+  await page.evaluate(()=>{const e=document.getElementById('colegioAnterior');e.value='Isidro Menéndez';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  await page.waitForFunction(()=>document.querySelectorAll('#catalogoCentrosEducativos [role=option]').length>0);
+  assert(await page.locator('#catalogoCentrosEducativos [role=option]').count()<=30);
+  await page.evaluate(()=>{const e=document.getElementById('colegioAnterior');e.value='Colegio Nuevo Horizonte';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  assert.equal(await page.evaluate(()=>pruebas.validarCampo(document.getElementById('colegioAnterior'),true)),true);
+  assert.equal(await page.locator('#tipoModalidad option').count(),3);
+  await page.locator('#tipoModalidad').selectOption('Modalidad Alterna (Sábados)',{force:true});
   await page.locator('#departamentoNacimientoBusqueda').fill('San Salvador');
   await page.locator('#departamentoNacimientoBusquedaOpciones [role=option]').click();
   await page.locator('#lugarNacimientoBusqueda').fill('San Salvador');
@@ -36,6 +43,7 @@ test('país, búsqueda local, nacimiento exterior y recuperación del borrador',
   await page.waitForTimeout(1000);await page.reload();
   await page.waitForFunction(()=>document.querySelector('form').dataset.borradorListo==='true');
   assert.equal(await page.locator('#paisNacimiento').inputValue(),'GT');
+  assert.equal(await page.locator('#tipoModalidad').inputValue(),'Modalidad Alterna (Sábados)');
   assert.equal(await page.locator('#nacimientoExtranjero').inputValue(),'Ciudad de Guatemala');
   await page.locator('#paisNacimiento').selectOption('SV');
   assert.equal(await page.locator('#departamentoNacimientoBusqueda').isVisible(),true);

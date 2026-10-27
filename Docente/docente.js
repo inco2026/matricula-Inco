@@ -1,3 +1,4 @@
+import { mostrarFichaOficial, imprimirFichaOficial } from '../ficha-oficial.js';
 import { DOCUMENTOS_INSCRIPCION, DOCUMENTOS_ANTERIORES, claveDocumento } from '../documentos-inscripcion.js';
 import { activarEdicion, desactivarEdicion, validarMatricula, leerFotoAdministrador } from '../Administrador/reglas-formulario.js';
 import { protegerRuta } from "../auth-guard.js";
@@ -59,7 +60,7 @@ const CAMPOS_FICHA = [
   "tipoTransporte", "distanciaKm", "zonaResidencia", "conQuienVive", "direccionResidencia",
   "primerApellido", "segundoApellido", "primerNombre", "segundoNombre",
   "fechaNacimiento", "edad", "sexo", "telefonoEstudiante", "correoEstudiantil", "correoPersonal",
-  "grado", "tipoIngreso", "especialidad", "ultimoAnioAprobado", "colegioAnterior",
+  "grado", "tipoModalidad", "paisNacimiento", "tipoIngreso", "especialidad", "ultimoAnioAprobado", "colegioAnterior",
   "hermanosCentroeducativo", "nombresHermanos", "nivelAcademico",
   "computadoraMineducyt", "internet",
   "tallaCamisa", "tallaPantalon", "tallaBlusa", "tallaFalda", "tallaZapatos",
@@ -500,8 +501,8 @@ function iniciarFormatoFicha() {
   const campos = new Map(Array.from(card.querySelectorAll('input[id^="r_"]'), el => [el.id.slice(2), el.closest('.campo')]));
   campos.set('foto', document.getElementById('editarFotoAdministrador'));
   const grupos = [
-    ['Datos del Alumno', ['nie','duiEstudiante','primerApellido','segundoApellido','primerNombre','segundoNombre','lugarNacimiento','fechaNacimiento','edad','grado','sexo','telefonoEstudiante','correoEstudiantil','correoPersonal','foto']],
-    ['Información Académica', ['especialidad','ultimoAnioAprobado','colegioAnterior','tipoIngreso','hermanosCentroeducativo','nombresHermanos','nivelAcademico']],
+    ['Datos del Alumno', ['nie','duiEstudiante','primerApellido','segundoApellido','primerNombre','segundoNombre','paisNacimiento','lugarNacimiento','fechaNacimiento','edad','grado','sexo','telefonoEstudiante','correoEstudiantil','correoPersonal','foto']],
+    ['Información Académica', ['especialidad','ultimoAnioAprobado','colegioAnterior','tipoModalidad','tipoIngreso','hermanosCentroeducativo','nombresHermanos','nivelAcademico']],
     ['Recursos, Transporte y Residencia', ['computadoraMineducyt','internet','tallaCamisa','tallaPantalon','tallaBlusa','tallaFalda','tallaZapatos','tipoTransporte','distanciaKm','zonaResidencia','conQuienVive','conQuienViveOtro','direccionResidencia']],
     ['Salud y Responsable', ['enfermedad','cualEnfermedad','medicamento','otros','responsable','parentesco','duiResponsable','telefonoResponsable','whatsappResponsable','correoResponsable']],
     ['Datos de la Madre y del Padre', ['madreNombre','madreOcupacion','madreLugarTrabajo','madreDui','madreLugarNacimiento','madreFechaNacimiento','madreCelular','padreNombre','padreOcupacion','padreLugarTrabajo','padreDui','padreLugarNacimiento','padreFechaNacimiento','padreCelular']]
@@ -572,3 +573,10 @@ window.mostrarInscritos = async function() {
   } catch(error){mensaje.textContent='No se pudo cargar el listado: '+error.message;}
 };
 iniciarFormatoFicha();
+
+window.imprimirFichaDocente = async function () {
+ if (!matriculaActual) return;
+ const contenedor = document.createElement("div");
+ mostrarFichaOficial(contenedor, {...matriculaActual, docenteNombre: sessionStorage.getItem("nombreUsuario") || ""});
+ await imprimirFichaOficial(contenedor);
+};

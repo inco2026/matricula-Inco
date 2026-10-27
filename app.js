@@ -180,11 +180,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             evento.preventDefault();
 
-            const correo =
+            const nombre =
                 usuarioAdmin.value.trim();
 
             const clave =
-                passwordAdmin.value.trim();
+                passwordAdmin.value;
 
 
             mensajeAdmin.textContent = '';
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
             passwordAdmin.classList.remove('campo-error');
 
 
-            if (correo === '' || clave === '') {
+            if (nombre === '' || clave === '') {
 
                 mensajeAdmin.textContent =
                     'Complete todos los campos.';
@@ -210,14 +210,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 // el CDN de Supabase no estén disponibles. Por eso cargamos el
                 // cliente únicamente al intentar iniciar sesión.
                 const { supabase } = await import('./supabase-config.js');
-                const { data: authData, error: authError } =
-                    await supabase.auth.signInWithPassword({ email: correo, password: clave });
-
+                const { data: acceso, error: errorAcceso } = await supabase.functions.invoke('crear-usuario', {
+                    body: { accion: 'ingresar', nombre, contrasena: clave },
+                });
+                if (errorAcceso) {
+                    let detalle = '';
+                    try { detalle = (await errorAcceso.context?.clone().json())?.error || ''; } catch {}
+                    throw new Error(detalle || 'No se pudo comprobar el nombre y la contraseña.');
+                }
+                if (!acceso?.ok || !acceso.session?.access_token || !acceso.session?.refresh_token) {
+                    throw new Error('Falta actualizar la función de ingreso por nombre en Supabase.');
+                }
+                const { data: authData, error: authError } = await supabase.auth.setSession(acceso.session);
                 if (authError) throw authError;
 
                 const { data: perfil, error: perfilError } = await supabase
                     .from('perfiles')
-                    .select('nombre, rol')
+                    .select('*')
                     .eq('id', authData.user.id)
                     .single();
 
@@ -226,8 +235,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw new Error('El usuario no tiene un perfil autorizado.');
                 }
 
+                if (perfil.activo === false) {
+                    await supabase.auth.signOut();
+                    throw new Error('Esta cuenta está inhabilitada. Comuníquese con la administración.');
+                }
+
                 sessionStorage.setItem('rolUsuario', perfil.rol);
-                sessionStorage.setItem('nombreUsuario', perfil.nombre || correo);
+                sessionStorage.setItem('nombreUsuario', perfil.nombre || nombre);
                 mensajeAdmin.textContent = 'Acceso correcto.';
 
                 if (perfil.rol === 'administrador') {
@@ -243,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (error) {
                 const errorDeConexion = /failed to fetch|dynamically imported module/i.test(error.message || '');
                 mensajeAdmin.textContent = error.message === 'Invalid login credentials'
-                    ? 'Correo o contraseña incorrectos.'
+                    ? 'Nombre o contraseña incorrectos.'
                     : errorDeConexion
                         ? 'No se pudo conectar con Supabase. Revise su conexión a Internet y vuelva a intentar.'
                         : `No se pudo iniciar sesión: ${error.message}`;

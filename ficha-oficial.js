@@ -1,249 +1,60 @@
-function escapar(valor) {
-  return valor.replace(/[&<>"']/g, caracter => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[caracter]));
+const escapar = valor => String(valor ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fecha(valor) {
+ const s=String(valor || '');const iso=/^(\d{4})-(\d{2})-(\d{2})/.exec(s), local=/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/.exec(s);
+ return iso ? [iso[3],MESES[Number(iso[2])-1],iso[1]] : local ? [local[1],MESES[Number(local[2])-1],local[3]] : ['','',''];
+}
+const escudo = new URL('./img/Escudo-inco.png', import.meta.url).href;
+export function mostrarFichaOficial(contenedor, datos = {}) {
+ if(!contenedor)return;
+ const v=clave=>escapar(datos[clave]);
+ const campo=(titulo,valor)=>'<span class="fo-campo"><span>'+escapar(titulo)+'</span> <b>'+escapar(valor)+'</b></span>';
+ const fila=(...campos)=>'<div class="fo-renglon">'+campos.join('')+'</div>';
+ const seccion=titulo=>'<h2 class="fo-banda">'+titulo+'</h2>';
+ const nacimiento=fecha(datos.fechaNacimiento),matricula=fecha(datos.fechaMatricula);
+ const nombre=[datos.primerNombre,datos.segundoNombre,datos.primerApellido,datos.segundoApellido].filter(Boolean).join(' ');
+ const foto=/^data:image\/(png|jpe?g|webp);base64,[a-z0-9+/=\s]+$/i.test(datos.fotoEstudiante || '') ? '<img src="'+datos.fotoEstudiante+'" alt="Fotografía del estudiante">' : 'Foto de<br>3.5 × 2.5 cm';
+ const padre=(prefijo,titulo)=>'<div class="fo-progenitor"><b class="fo-nombre-padre">'+v(prefijo+'Nombre')+'</b><div class="fo-parentesco">'+titulo+'</div>'+fila(campo('DUI:',datos[prefijo+'Dui']),campo('Celular:',datos[prefijo+'Celular']))+fila(campo('Ocupación:',datos[prefijo+'Ocupacion']))+fila(campo('Trabajo:',datos[prefijo+'LugarTrabajo']))+(datos[prefijo+'Correo']?fila(campo('Correo:',datos[prefijo+'Correo'])):'')+'</div>';
+ const compromisos=['Asistir puntualmente a las convocatorias hechas por la Institución.','Leer y dar cumplimiento a lo establecido en el Manual de Convivencia.','Cumplir con los compromisos pactados en Asamblea General de padres, madres y/o responsables.','Asistir a cualquier llamado del/la maestro/a, coordinación, subdirección o dirección de la institución.','Responder por los daños materiales que ocasione el estudiante en la Institución.','Velar porque el alumno/a no pueda retirarse de la institución en horas de clase, sin la presencia de su responsable.','No permitir que el alumno/a traiga objetos de valor que no sean material didáctico utilizado en clases.'];
+ contenedor.innerHTML='<article class="ficha-oficial fo-carta">'+
+ '<header class="fo-encabezado"><img class="fo-escudo" src="'+escudo+'" alt="Escudo INCO"><div><strong>MINISTERIO DE EDUCACIÓN</strong><p>Gerencia de Gestión Institucional</p><h1>FICHA DE MATRÍCULA OFICIAL DEL ALUMNO/A</h1><strong>INSTITUTO NACIONAL DE COMERCIO</strong></div><div class="fo-retrato">'+foto+'</div></header>'+
+ '<div class="fo-metadatos"><div>San Salvador, <b>'+escapar(matricula[0])+'</b> de <b>'+escapar(matricula[1])+'</b> de <b>'+escapar(matricula[2])+'</b></div><div class="fo-ficha-numero">N.º de ficha<br><b>'+v('numeroFicha')+'</b></div></div>'+
+ '<div class="fo-marco">'+seccion('REGISTRO Y DATOS DE IDENTIFICACIÓN')+
+ fila(campo('Bachillerato que estudiará:',datos.especialidad),campo('NIE:',datos.nie))+
+ fila(campo('Año que estudiará:',datos.grado),campo('DUI del estudiante:',datos.duiEstudiante))+
+ fila(campo('Tipo de ingreso:',datos.tipoIngreso),campo('Modalidad:',datos.tipoModalidad))+
+ seccion('1. DATOS GENERALES DEL ESTUDIANTE')+
+ '<div class="fo-nombres">'+[['primerApellido','Primer apellido'],['segundoApellido','Segundo apellido'],['primerNombre','Primer nombre'],['segundoNombre','Segundo nombre']].map(([k,t])=>'<div><b>'+v(k)+'</b><span>'+t+'</span></div>').join('')+'</div>'+
+ fila(campo('Lugar de nacimiento:',[datos.lugarNacimiento,datos.paisNacimiento].filter(Boolean).join(' · ')),campo('Fecha:',nacimiento.filter(Boolean).join(' / ')))+
+ fila(campo('Edad:',datos.edad),campo('Sexo:',datos.sexo),campo('Celular:',datos.telefonoEstudiante),campo('Grado:',datos.grado))+
+ fila(campo('Último año aprobado:',datos.ultimoAnioAprobado),campo('Centro educativo anterior:',datos.colegioAnterior))+
+ fila(campo('Transporte:',datos.tipoTransporte),campo('Distancia (km):',datos.distanciaKm),campo('Zona:',datos.zonaResidencia))+
+ fila(campo('Dirección exacta de residencia:',datos.direccionResidencia))+
+ fila(campo('¿Con quién vive?',datos.conQuienVive),campo('¿Padece alguna enfermedad?',datos.enfermedad),campo('¿Cuál?',datos.cualEnfermedad))+
+ ((datos.medicamento||datos.otros)?fila(campo('Medicamentos:',datos.medicamento),campo('Observaciones de salud:',datos.otros)):'')+
+ fila(campo('Correo MINEDUCYT:',datos.correoEstudiantil),campo('Computadora MINEDUCYT:',datos.computadoraMineducyt))+
+ fila(campo('Correo personal:',datos.correoPersonal),campo('Acceso a internet:',datos.internet))+
+ fila(campo('Tallas — Camisa:',datos.tallaCamisa),campo('Pantalón:',datos.tallaPantalon),campo('Blusa:',datos.tallaBlusa),campo('Falda:',datos.tallaFalda),campo('Zapatos:',datos.tallaZapatos))+
+ fila(campo('Hermanos en el centro:',datos.hermanosCentroeducativo),campo('Nombre, grado y NIE:',datos.nombresHermanos))+
+ seccion('2. DATOS DEL RESPONSABLE')+
+ fila(campo('Responsable:',datos.responsable),campo('DUI:',datos.duiResponsable),campo('Parentesco:',datos.parentesco))+
+ fila(campo('Teléfono:',datos.telefonoResponsable),campo('WhatsApp:',datos.whatsappResponsable),campo('Correo:',datos.correoResponsable))+
+ '<p class="fo-nota">El correo del responsable permite mantener la comunicación y el control de asistencia.</p>'+
+ seccion('3. DATOS DE MADRE Y PADRE')+'<div class="fo-padres">'+padre('madre','MADRE')+padre('padre','PADRE')+'</div>'+
+ seccion('4. COMPROMISOS')+'<ol class="fo-compromisos-nuevos">'+compromisos.map(t=>'<li>'+t+'</li>').join('')+'</ol>'+
+ seccion('5. ACEPTACIÓN Y AUTORIZACIÓN')+'<div class="fo-firmas-nuevas">'+[[datos.docenteNombre,'DOCENTE'],[datos.responsable,'PADRE, MADRE Y/O RESPONSABLE'],[nombre,'ESTUDIANTE']].map(([n,t])=>'<div class="fo-firma"><div class="fo-linea-firma">F.</div><span class="fo-nombre-firma">'+escapar(n)+'</span><span>'+t+'</span></div>').join('')+'</div></div></article>';
 }
 
-const MESES_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-];
-
-function descomponerFecha(fechaStr) {
-  if (!fechaStr) return { dia: "", mes: "", mesNombre: "", anio: "" };
-
-  let partes = null;
-  const isoMatch = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(fechaStr);
-  const otroMatch = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/.exec(fechaStr);
-
-  if (isoMatch) {
-    partes = { anio: isoMatch[1], mes: isoMatch[2], dia: isoMatch[3] };
-  } else if (otroMatch) {
-    partes = { dia: otroMatch[1], mes: otroMatch[2], anio: otroMatch[3] };
-  }
-
-  if (!partes) return { dia: "", mes: "", mesNombre: "", anio: "" };
-
-  const mesIndex = parseInt(partes.mes, 10) - 1;
-  const mesNombre = MESES_ES[mesIndex] || "";
-
-  return {
-    dia: partes.dia.padStart(2, "0"),
-    mes: partes.mes.padStart(2, "0"),
-    mesNombre,
-    anio: partes.anio
-  };
-}
-
-
-export function mostrarFichaOficial(contenedor, datos) {
-  if (!contenedor) return;
-
-  const data = Object.fromEntries(Object.entries(datos).map(([clave, valor]) => [clave,
-    typeof valor === 'string' ? escapar(valor) : valor
-  ]));
-  data.fotoURL = /^data:image\/(?:png|jpe?g|webp);base64,[a-z0-9+/=\s]+$/i.test(datos.fotoEstudiante || '') ? datos.fotoEstudiante : '';
-  const fNac = descomponerFecha(data.fechaNacimiento);
-  const fMat = descomponerFecha(data.fechaMatricula);
-  const anioCorto = fMat.anio ? fMat.anio.slice(-1) : "";
-
-  contenedor.innerHTML = `
-    <div class="ficha-oficial">
-
-      <div class="fo-header">
-        <img src="../img/Escudo-inc.png" alt="Escudo INC" class="fo-logo">
-        <div class="fo-titulo">
-          <p class="fo-titulo-min">Ministerio de Educación</p>
-          <p class="fo-titulo-min">Gerencia de Gestión Institucional</p>
-          <h1>Ficha de Matrícula Oficial del alumno/a</h1>
-          <p class="fo-titulo-min">Instituto Nacional de Comercio</p>
-        </div>
-        <div class="fo-foto">
-          ${data.fotoURL
-            ? `<img src="${data.fotoURL}" alt="Foto del estudiante" style="width:100%;height:100%;object-fit:cover;">`
-            : `Foto de<br>3.5 X 2.5`}
-        </div>
-      </div>
-
-      <p class="fo-texto-legal">
-        Lea el formulario, antes de llenarlo, para evitar tachaduras y enmendaduras que lo invalidan y obligan
-        a su reposición. Utilice tinta azul, letra de molde legible e información real. Los datos proporcionados
-        son de uso estrictamente académico y de absoluta confidencialidad.
-      </p>
-
-      <p class="fo-anio"><strong>Año de Bachillerato que estudiará:</strong> <span class="fo-linea">${data.grado || ""}</span></p>
-
-      <div class="fo-fila-top">
-        <div class="fo-nie-dui">
-          <p><strong>NIE:</strong> <span class="fo-linea">${data.nie || ""}</span></p>
-          <p><strong>DUI:</strong> <span class="fo-linea">${data.duiEstudiante || ""}</span></p>
-        </div>
-
-        <div class="fo-sello">SELLO</div>
-
-        <div class="fo-numero">
-          <span>N°</span>
-          <span class="fo-numero-valor">${data.numeroFicha || ""}</span>
-        </div>
-      </div>
-
-      <p class="fo-fecha">
-        San Salvador,
-        <span class="fo-linea-corta">${fMat.dia || ""}</span> de
-        <span class="fo-linea-corta">${fMat.mesNombre || ""}</span> de 202<span class="fo-linea-mini">${anioCorto}</span>
-      </p>
-
-      <h3 class="fo-subtitulo">Datos Generales del Estudiante según Partida de Nacimiento</h3>
-      <table class="fo-tabla-nombre">
-        <tr>
-          <td>${data.primerApellido || ""}</td>
-          <td>${data.segundoApellido || ""}</td>
-          <td>${data.primerNombre || ""}</td>
-          <td>${data.segundoNombre || ""}</td>
-        </tr>
-        <tr class="fo-tabla-labels">
-          <td>Primer Apellido</td>
-          <td>Segundo Apellido</td>
-          <td>Primer Nombre</td>
-          <td>Segundo Nombre</td>
-        </tr>
-      </table>
-
-      <p>
-        Lugar y fecha de nacimiento: <span class="fo-linea">${data.lugarNacimiento || ""}</span>
-        Día: <span class="fo-linea-mini">${fNac.dia || ""}</span>
-        Mes: <span class="fo-linea-mini">${fNac.mesNombre || ""}</span>
-        Año: <span class="fo-linea-mini">${fNac.anio || ""}</span>
-      </p>
-
-      <p>
-        Edad: <span class="fo-linea-mini">${data.edad || ""}</span>
-        ${data.sexo ? `&nbsp;&nbsp;Sexo: <strong>${data.sexo}</strong>` : ""}
-        &nbsp;&nbsp;N° de celular del estudiante <span class="fo-linea">${data.telefonoEstudiante || ""}</span>
-        &nbsp;&nbsp;Grado que estudiará <span class="fo-linea">${data.grado || ""}</span>
-      </p>
-
-      <p>
-        Último año aprobado <span class="fo-linea">${data.ultimoAnioAprobado || ""}</span>
-        ${data.tipoIngreso ? `&nbsp;&nbsp;<strong>${data.tipoIngreso}</strong>` : ""}
-        &nbsp;&nbsp;¿Dónde estudió el año anterior? <span class="fo-linea">${data.colegioAnterior || ""}</span>
-      </p>
-
-      ${(data.tipoTransporte || data.distanciaKm) ? `
-      <p>
-        ${data.tipoTransporte ? `Tipo de transporte que utiliza: <strong>${data.tipoTransporte}</strong>` : ""}
-        ${data.distanciaKm ? `&nbsp;&nbsp;Distancia en KM <span class="fo-linea-mini">${data.distanciaKm}</span>` : ""}
-      </p>` : ""}
-
-      ${data.conQuienVive ? `
-      <p>¿Con quién vive? <strong>${data.conQuienVive}</strong></p>` : ""}
-
-      ${data.enfermedad ? `
-      <p>
-        ¿Padece de alguna enfermedad? <strong>${data.enfermedad}</strong>
-        ${data.cualEnfermedad ? ` &nbsp;&nbsp;¿Cuál? <span class="fo-linea">${data.cualEnfermedad}</span>` : ""}
-      </p>` : ""}
-      ${data.medicamento ? `<p>Nombre del medicamento que utiliza: <span class="fo-linea">${data.medicamento}</span> ¿En qué dosis? <span class="fo-linea"></span></p>` : ""}
-      ${data.otros ? `<p>Otros: <span class="fo-linea-larga">${data.otros}</span></p>` : ""}
-
-      ${(data.vacunaCovid || data.zonaResidencia) ? `
-      <p>
-        ${data.vacunaCovid ? `Vacuna COVID-19: <strong>${data.vacunaCovid}</strong>` : ""}
-        ${data.zonaResidencia ? `&nbsp;&nbsp;Zona de residencia: <strong>${data.zonaResidencia}</strong>` : ""}
-      </p>` : ""}
-      ${data.direccionResidencia ? `<p>Dirección de Residencia: <span class="fo-linea-larga">${data.direccionResidencia}</span></p>` : ""}
-
-      ${(data.correoEstudiantil || data.computadoraMineducyt) ? `
-      <p>
-        ${data.correoEstudiantil ? `Correo electrónico MINEDUCYT <span class="fo-linea">${data.correoEstudiantil}</span>` : ""}
-        ${data.computadoraMineducyt ? `&nbsp;&nbsp;Posee computadora del MINEDUCYT: <strong>${data.computadoraMineducyt}</strong>` : ""}
-      </p>` : ""}
-      ${(data.correoPersonal || data.internet) ? `
-      <p>
-        ${data.correoPersonal ? `Correo personal <span class="fo-linea">${data.correoPersonal}</span>` : ""}
-        ${data.internet ? `&nbsp;&nbsp;Posee acceso a internet: <strong>${data.internet}</strong>` : ""}
-      </p>` : ""}
-
-      <p>
-        Talla de camisa <span class="fo-linea-mini">${data.tallaCamisa || ""}</span>
-        Pantalón <span class="fo-linea-mini">${data.tallaPantalon || ""}</span>
-        Blusa <span class="fo-linea-mini">${data.tallaBlusa || ""}</span>
-        Falda <span class="fo-linea-mini">${data.tallaFalda || ""}</span>
-        Zapatos <span class="fo-linea-mini">${data.tallaZapatos || ""}</span>
-      </p>
-
-      ${data.hermanosCentroeducativo ? `
-      <p>
-        Tiene hermano/a en el Centro Escolar: <strong>${data.hermanosCentroeducativo}</strong>
-        ${data.nombresHermanos ? ` &nbsp;&nbsp;Nombre: <span class="fo-linea">${data.nombresHermanos}</span>` : ""}
-        ${data.nivelAcademico ? ` Nivel/Secc: <span class="fo-linea-mini">${data.nivelAcademico}</span>` : ""}
-      </p>` : ""}
-
-      <h3 class="fo-subtitulo">Bachillerato que estudiará</h3>
-      <p><strong>${data.especialidad || "—"}</strong></p>
-
-      <h3 class="fo-subtitulo">Datos del Responsable</h3>
-      <p>Responsable: <span class="fo-linea-larga">${data.responsable || ""}</span></p>
-      <p>
-        Parentesco <span class="fo-linea">${data.parentesco || ""}</span>
-        DUI <span class="fo-linea">${data.duiResponsable || ""}</span>
-        TEL. <span class="fo-linea">${data.telefonoResponsable || ""}</span>
-        Whatsapp <span class="fo-linea">${data.whatsappResponsable || ""}</span>
-      </p>
-      <p>Correo Electrónico <span class="fo-linea-larga">${data.correoResponsable || ""}</span></p>
-
-      <table class="fo-tabla-madre-padre">
-        <tr><th colspan="2">Datos de Madre - Padre</th></tr>
-        <tr>
-          <td>Madre: <span class="fo-linea-larga">${data.madreNombre || ""}</span></td>
-          <td>Padre: <span class="fo-linea-larga">${data.padreNombre || ""}</span></td>
-        </tr>
-        <tr>
-          <td>Ocupación: <span class="fo-linea">${data.madreOcupacion || ""}</span></td>
-          <td>Ocupación: <span class="fo-linea">${data.padreOcupacion || ""}</span></td>
-        </tr>
-        <tr>
-          <td>Lugar de trabajo: <span class="fo-linea">${data.madreLugarTrabajo || ""}</span></td>
-          <td>Lugar de trabajo: <span class="fo-linea">${data.padreLugarTrabajo || ""}</span></td>
-        </tr>
-        <tr>
-          <td>Número de DUI: <span class="fo-linea">${data.madreDui || ""}</span></td>
-          <td>Número de DUI: <span class="fo-linea">${data.padreDui || ""}</span></td>
-        </tr>
-        <tr>
-          <td>Lugar y fecha de nacimiento: <span class="fo-linea">${[data.madreLugarNacimiento, descomponerFecha(data.madreFechaNacimiento).dia && `${descomponerFecha(data.madreFechaNacimiento).dia}/${descomponerFecha(data.madreFechaNacimiento).mes}/${descomponerFecha(data.madreFechaNacimiento).anio}`].filter(Boolean).join(" — ")}</span></td>
-          <td>Lugar y fecha de nacimiento: <span class="fo-linea">${[data.padreLugarNacimiento, descomponerFecha(data.padreFechaNacimiento).dia && `${descomponerFecha(data.padreFechaNacimiento).dia}/${descomponerFecha(data.padreFechaNacimiento).mes}/${descomponerFecha(data.padreFechaNacimiento).anio}`].filter(Boolean).join(" — ")}</span></td>
-        </tr>
-        <tr>
-          <td>Número de Celular: <span class="fo-linea">${data.madreCelular || ""}</span></td>
-          <td>Número de Celular: <span class="fo-linea">${data.padreCelular || ""}</span></td>
-        </tr>
-      </table>
-
-      <h3 class="fo-subtitulo">Compromisos</h3>
-      <ol class="fo-compromisos">
-        <li>Asistir puntualmente a las convocatorias hechas por la Institución.</li>
-        <li>Leer y dar cumplimiento a lo que establece el Manual de Convivencia.</li>
-        <li>Cumplir con los compromisos pactados en Asamblea General de padres, madres y/o responsables.</li>
-        <li>Asistir a cualquier llamado por el/la maestro/a, coordinación, subdirección o dirección de la institución.</li>
-        <li>Responder por daños materiales que ocasione mi hijo/a en la Institución.</li>
-        <li>Velar porque el alumno/a no pueda retirarse de la institución en horas de clase, sin la presencia de su responsable.</li>
-        <li>No permitir que el alumno/a pueda traer a la institución objetos de valor que no sea material didáctico utilizado en clases.</li>
-      </ol>
-
-      <div class="fo-firmas">
-        <div class="fo-firma">
-          <span class="fo-linea-firma"></span>
-          <p>Docente</p>
-        </div>
-        <div class="fo-firma">
-          <span class="fo-linea-firma"></span>
-          <p>Padre, madre y/o responsable</p>
-        </div>
-        <div class="fo-firma">
-          <span class="fo-linea-firma"></span>
-          <p>Estudiante</p>
-        </div>
-      </div>
-
-    </div>
-  `;
+export async function imprimirFichaOficial(contenedor) {
+ document.getElementById('marcoImpresionFicha')?.remove();
+ const marco=document.createElement('iframe');marco.id='marcoImpresionFicha';marco.title='Ficha de matrícula en tamaño carta';
+ marco.style.cssText='position:fixed;left:-10000px;top:0;width:816px;height:1056px;border:0';
+ const css=new URL('./ficha-oficial.css',import.meta.url).href;
+ const listo=new Promise(resolve=>marco.onload=resolve);
+ marco.srcdoc='<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ficha de matrícula</title><link rel="stylesheet" href="'+css+'"></head><body>'+contenedor.innerHTML+'</body></html>';
+ document.body.appendChild(marco);await listo;
+ await Promise.all([...marco.contentDocument.images].map(img=>img.complete?Promise.resolve():new Promise(r=>{img.onload=r;img.onerror=r;})));
+ await marco.contentDocument.fonts.ready;
+ marco.contentWindow.addEventListener('afterprint',()=>marco.remove(),{once:true});
+ marco.contentWindow.focus();marco.contentWindow.print();
 }

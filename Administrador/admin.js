@@ -1,13 +1,13 @@
 import { DOCUMENTOS_INSCRIPCION } from '../documentos-inscripcion.js';
 import { activarEdicion, desactivarEdicion, validarMatricula, leerFotoAdministrador } from './reglas-formulario.js';
-import { mostrarFichaOficial } from "../ficha-oficial.js";
+import { mostrarFichaOficial, imprimirFichaOficial } from "../ficha-oficial.js";
 import { protegerRuta, cerrarSesionSupabase } from "../auth-guard.js";
 import {
   actualizarMatricula,
   buscarMatriculaPorNie,
-  crearDocente,
+  crearUsuario,
   eliminarMatricula as eliminarMatriculaSupabase,
-  listarDocentes,
+  listarUsuarios,
   listarMatriculas,
   obtenerPerfil,
 } from "../supabase-data.js";
@@ -191,6 +191,8 @@ function mostrarResultados(data) {
     "r_distanciaKm": data.distanciaKm ?? "",
     "r_tipoTransporte": data.tipoTransporte ?? "",
     "r_tipoIngreso": data.tipoIngreso ?? "",
+    "r_tipoModalidad": data.tipoModalidad ?? "",
+    "r_paisNacimiento": data.paisNacimiento ?? "",
     "r_lugarNacimiento": data.lugarNacimiento ?? "",
     "r_duiEstudiante": data.duiEstudiante ?? "",
     "r_primerApellido": data.primerApellido || "",
@@ -293,23 +295,7 @@ async function generarFichaImprimir(data, expediente) {
   }
   if (matriculaActual !== data) return false;
   const contenedor = document.getElementById("contenidoImprimir");
-  mostrarFichaOficial(contenedor, { ...data, vacunaCovid: "" });
-  const nombresFirmas = [
-    nombreDocente,
-    data.responsable || "",
-    [data.primerNombre, data.segundoNombre, data.primerApellido, data.segundoApellido]
-      .filter(parte => parte && String(parte).trim())
-      .map(parte => String(parte).trim())
-      .join(" "),
-  ];
-  contenedor?.querySelectorAll(".fo-firma .fo-linea-firma").forEach((linea, indice) => {
-    if (!nombresFirmas[indice]) return;
-    // Los tres nombres (docente, responsable, estudiante) se colocan igual: debajo de la línea de firma
-    const nombre = document.createElement("span");
-    nombre.className = "fo-nombre-firma";
-    nombre.textContent = nombresFirmas[indice];
-    linea.after(nombre);
-  });
+  mostrarFichaOficial(contenedor, { ...data, docenteNombre: nombreDocente });
   return true;
 }
 
@@ -501,7 +487,7 @@ window.imprimirDocumento = async function() {
     return;
   }
 
-  if (await generarFichaImprimir(matriculaActual, matriculaActual)) window.print();
+  if (await generarFichaImprimir(matriculaActual, matriculaActual)) await imprimirFichaOficial(document.getElementById("contenidoImprimir"));
 };
 
 /* =========================================================
@@ -535,7 +521,7 @@ window.descargarPDF = async function() {
     },
     jsPDF: {
       unit: 'mm',
-      format: [216, 330], // Tamaño oficio
+      format: 'letter', // Tamaño carta
       orientation: 'portrait'
     },
     pagebreak: { mode: ['avoid-all'] }
@@ -556,7 +542,7 @@ window.descargarPDF = async function() {
    conservan el comportamiento automático del formulario.
 ========================================================= */
 const CAMPOS_EDITABLES = [
-  "r_numeroFicha", "r_fechaMatricula", "r_nie", "r_direccionResidencia", "r_conQuienVive", "r_zonaResidencia", "r_distanciaKm", "r_tipoTransporte", "r_tipoIngreso", "r_lugarNacimiento", "r_duiEstudiante",
+  "r_numeroFicha", "r_fechaMatricula", "r_nie", "r_direccionResidencia", "r_conQuienVive", "r_zonaResidencia", "r_distanciaKm", "r_tipoTransporte", "r_tipoIngreso", "r_tipoModalidad", "r_paisNacimiento", "r_lugarNacimiento", "r_duiEstudiante",
   "r_primerApellido", "r_segundoApellido", "r_primerNombre", "r_segundoNombre",
   "r_fechaNacimiento", "r_edad", "r_sexo", "r_telefonoEstudiante", "r_correoEstudiantil", "r_correoPersonal",
 
@@ -758,33 +744,96 @@ window.mostrarDocentes = async function () {
   const mensaje = document.getElementById("mensajeDocentes");
   const contenedor = document.getElementById("tablaDocentesContenedor");
   const cuerpo = document.getElementById("cuerpoTablaDocentes");
-  mensaje.textContent = "Cargando docentes...";
+  mensaje.textContent = "Cargando usuarios...";
   contenedor.style.display = "none";
   cuerpo.innerHTML = "";
 
   try {
-    const docentes = await listarDocentes();
+    const docentes = await listarUsuarios();
     if (!docentes.length) {
-      mensaje.textContent = "No hay docentes registrados.";
+      mensaje.textContent = "No hay usuarios registrados.";
       return;
     }
 
+    const administradoresActivos = docentes.filter(u => u.rol === "administrador" && u.activo !== false).length;
     docentes.forEach((docente) => {
       const fila = document.createElement("tr");
       fila.innerHTML = `
-        <td>${docente.nombre || "-"}</td>
-        <td>${docente.correo || "-"}</td>
-        <td><span class="badge-grado">Docente</span></td>
+        <td>${escaparTextoReporte(docente.nombre || "-")}</td>
+        <td>${escaparTextoReporte(docente.correo || "-")}</td>
+        <td><span class="badge-grado">${({ administrador: "Administrador", coordinador: "Coordinador", docente: "Docente" })[docente.rol] || "Sin rol"}</span></td>
         <td>${formatearFechaHora(docente.creado_en)}</td>
+        <td>${docente.activo === false ? "Inhabilitado" : "Activo"}</td>
       `;
+      const acciones = document.createElement("td");
+      const botonEstado = document.createElement("button");
+      botonEstado.type = "button";
+      botonEstado.className = "btn-nuevo-usuario";
+      const habilitar = docente.activo === false;
+      const propia = docente.correo === sessionStorage.getItem("correoUsuario");
+      const ultimoAdmin = docente.rol === "administrador" && !habilitar && administradoresActivos <= 1;
+      botonEstado.textContent = propia ? "Tu cuenta" : habilitar ? "Habilitar" : "Inhabilitar";
+      botonEstado.disabled = propia || ultimoAdmin;
+      if (propia || ultimoAdmin) botonEstado.title = propia ? "No puede inhabilitar su propia cuenta." : "Debe conservar un administrador activo.";
+      const detalleEstado = document.createElement("p");
+      detalleEstado.setAttribute("role", "status");
+      detalleEstado.style.cssText = "margin:8px 0;max-width:280px;white-space:normal";
+      const confirmarEstado = document.createElement("button");
+      confirmarEstado.type = "button";
+      confirmarEstado.className = "btn-nuevo-usuario";
+      confirmarEstado.textContent = habilitar ? "Confirmar habilitación" : "Confirmar inhabilitación";
+      confirmarEstado.hidden = true;
+      const cancelarEstado = document.createElement("button");
+      cancelarEstado.type = "button";
+      cancelarEstado.className = "btn-limpiar-reporte";
+      cancelarEstado.textContent = "Cancelar";
+      cancelarEstado.hidden = true;
+      botonEstado.addEventListener("click", () => {
+        detalleEstado.textContent = "¿Desea " + (habilitar ? "habilitar" : "inhabilitar") + " a " + (docente.nombre || docente.correo) + "?";
+        detalleEstado.style.color = "";
+        botonEstado.hidden = true;
+        confirmarEstado.hidden = false;
+        cancelarEstado.hidden = false;
+      });
+      cancelarEstado.addEventListener("click", () => {
+        detalleEstado.textContent = "";
+        botonEstado.hidden = false;
+        confirmarEstado.hidden = true;
+        cancelarEstado.hidden = true;
+      });
+      confirmarEstado.addEventListener("click", async () => {
+        botonEstado.disabled = true;
+        confirmarEstado.disabled = true;
+        cancelarEstado.disabled = true;
+        detalleEstado.textContent = "Guardando cambio de estado…";
+        try {
+          const { cambiarEstadoUsuario } = await import("../supabase-data.js");
+          await cambiarEstadoUsuario(docente.id, habilitar);
+          await window.mostrarDocentes();
+          mensaje.textContent = "Usuario " + (habilitar ? "habilitado" : "inhabilitado") + " correctamente.";
+        } catch (error) {
+          mensaje.textContent = "No se cambió el estado: " + error.message;
+          detalleEstado.textContent = "No se cambió el estado: " + error.message;
+          detalleEstado.style.color = "#b71c1c";
+          botonEstado.disabled = false;
+          botonEstado.hidden = false;
+          confirmarEstado.hidden = true;
+          cancelarEstado.hidden = true;
+        } finally {
+          confirmarEstado.disabled = false;
+          cancelarEstado.disabled = false;
+        }
+      });
+      acciones.append(botonEstado, detalleEstado, confirmarEstado, cancelarEstado);
+      fila.appendChild(acciones);
       cuerpo.appendChild(fila);
     });
 
-    mensaje.textContent = `${docentes.length} docente(s) registrado(s).`;
+    mensaje.textContent = `${docentes.length} usuario(s) registrado(s).`;
     contenedor.style.display = "block";
   } catch (error) {
-    console.error("Error al listar docentes:", error);
-    mensaje.textContent = "No se pudieron cargar los docentes: " + error.message;
+    console.error("Error al listar usuarios:", error);
+    mensaje.textContent = "No se pudieron cargar los usuarios: " + error.message;
   }
 }
 
@@ -814,22 +863,23 @@ formNuevoUsuario?.addEventListener("submit", async (event) => {
   const mensaje = document.getElementById("mensajeNuevoUsuario");
   const datos = new FormData(formNuevoUsuario);
   boton.disabled = true;
-  mensaje.textContent = "Creando cuenta docente...";
+  mensaje.textContent = "Creando usuario...";
 
   try {
-    await crearDocente({
+    await crearUsuario({
+      rol: String(datos.get("rol") || ""),
       nombre: String(datos.get("nombre") || "").trim(),
       correo: String(datos.get("correo") || "").trim().toLowerCase(),
       contrasena: String(datos.get("contrasena") || ""),
     });
-    mensaje.textContent = "Docente creado correctamente.";
+    mensaje.textContent = "Usuario creado correctamente. Ya puede ingresar con su nombre completo y contraseña.";
     formNuevoUsuario.reset();
     setTimeout(async () => {
       window.cerrarNuevoUsuario();
       await window.mostrarDocentes();
     }, 900);
   } catch (error) {
-    console.error("Error al crear docente:", error);
+    console.error("Error al crear usuario:", error);
     mensaje.textContent = "No se pudo crear: " + error.message;
   } finally {
     boton.disabled = false;
@@ -846,7 +896,7 @@ function documentosCompletos(r) {
  [d.principal, d.general].every(g => g.every(i => i?.marcado === true)));
 }
 function esMatriculado(r) {
- return documentosCompletos(r) && r.documentosChecklist?.actaCoordinador?.solvente === true;
+ return r.revisionCompleta === true;
 }
 window.buscarReportes = async function () {
   const mensajeReportes = document.getElementById("mensajeReportes");
@@ -871,7 +921,7 @@ window.buscarReportes = async function () {
     titulo.textContent = "Inscritos (formulario completado, matrícula pendiente)";
     tabla.before(titulo);
     const tituloMatriculados = document.createElement("h3");
-    tituloMatriculados.textContent = "Matriculados (documentos completos y acta solvente)";
+    tituloMatriculados.textContent = "Matriculados (proceso de matrícula completo)";
     const segundaTabla = tabla.cloneNode(true);
     cuerpoMatriculados = segundaTabla.querySelector("tbody");
     cuerpoMatriculados.id = "cuerpoTablaMatriculados";
@@ -892,7 +942,7 @@ window.buscarReportes = async function () {
       resultados = resultados.filter(r => r.grado === grado);
     }
     if (especialidad) {
-      resultados = resultados.filter(r => normalizarEspecialidad(r.especialidad) === especialidad);
+      resultados = resultados.filter(r => normalizarEspecialidad(r.especialidad) === normalizarEspecialidad(especialidad));
     }
     if (situacionAcademica) {
       resultados = resultados.filter((r) => {
@@ -909,7 +959,8 @@ window.buscarReportes = async function () {
       return;
     }
 
-    mensajeReportes.textContent = `✅ ${resultados.length} resultado(s) encontrado(s).`;
+    const cantidadMatriculados = resultados.filter(esMatriculado).length;
+    mensajeReportes.textContent = `✅ ${resultados.length} resultado(s) encontrado(s). Inscritos pendientes: ${resultados.length - cantidadMatriculados}. Matriculados: ${cantidadMatriculados}.`;
     mensajeReportes.style.color = "#2e7d32";
 
     resultados.forEach((r) => {
@@ -926,6 +977,70 @@ window.buscarReportes = async function () {
         <td>${alerta.html}<br>Documentos: ${documentosCompletos(r) ? "Completos" : "Pendientes"}</td>
         <td><button class="btn-ver-fila" onclick="verDesdeReporte('${r.nie || ""}')">Ver</button></td>
       `;
+      if (accesoAdministrador) {
+        const celdaAlerta = fila.cells[5];
+        celdaAlerta.classList.add("celda-revision");
+        celdaAlerta.innerHTML = alerta.esRepitiente || alerta.esSobreedad ? alerta.html : "";
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "revision-tarjeta";
+        const cabecera = document.createElement("div");
+        cabecera.className = "revision-cabecera";
+        const titulo = document.createElement("strong");
+        titulo.textContent = "Proceso de matrícula";
+        const estadoRevision = document.createElement("span");
+        estadoRevision.className = "revision-estado " + (r.revisionCompleta === true ? "revision-completa" : "revision-pendiente");
+        estadoRevision.textContent = r.revisionCompleta === true ? "Completo" : r.revisionCompleta === false ? "Incompleto" : "Por revisar";
+        cabecera.append(titulo, estadoRevision);
+        const pasos = document.createElement("ul");
+        pasos.className = "revision-pasos";
+        for (const [nombrePaso, completo, texto] of [["Formulario", true, "Completo"], ["Documentos", documentosCompletos(r), documentosCompletos(r) ? "Completos" : "Pendientes"], ["Acta", r.documentosChecklist?.actaCoordinador?.solvente === true, r.documentosChecklist?.actaCoordinador?.solvente === true ? "Solvente" : "Pendiente"]]) {
+          const paso = document.createElement("li");
+          paso.className = completo ? "paso-completo" : "paso-pendiente";
+          const nombre = document.createElement("span");
+          nombre.textContent = nombrePaso;
+          const valor = document.createElement("span");
+          valor.textContent = (completo ? "✓ " : "◷ ") + texto;
+          paso.append(nombre, valor);
+          pasos.appendChild(paso);
+        }
+        const etiqueta = document.createElement("label");
+        etiqueta.className = "revision-etiqueta";
+        etiqueta.textContent = "Revisión administrativa ";
+        const selector = document.createElement("select");
+        selector.className = "revision-selector";
+        selector.setAttribute("aria-label", "Revisión de matrícula de " + (nombreCompleto || r.nie));
+        selector.add(new Option("Seleccione una revisión", ""));
+        selector.add(new Option("Completo — Matriculado", "completo"));
+        selector.add(new Option("Incompleto — Inscrito", "incompleto"));
+        selector.value = r.revisionCompleta === true ? "completo" : r.revisionCompleta === false ? "incompleto" : "";
+        etiqueta.appendChild(selector);
+        const guardar = document.createElement("button");
+        guardar.type = "button";
+        guardar.className = "btn-nuevo-usuario revision-guardar";
+        guardar.textContent = "Guardar revisión";
+        const mensajeRevision = document.createElement("p");
+        mensajeRevision.className = "revision-nota";
+        mensajeRevision.setAttribute("role", "status");
+        mensajeRevision.textContent = r.revisadoEn ? "Revisó: " + (r.revisadoPorNombre || "Administrador") + " · " + formatearFechaHora(r.revisadoEn) : "Sin revisión administrativa guardada.";
+        guardar.addEventListener("click", async () => {
+          if (!selector.value) { mensajeRevision.textContent = "Seleccione completo o incompleto."; return; }
+          guardar.disabled = true;
+          selector.disabled = true;
+          mensajeRevision.textContent = "Guardando revisión…";
+          try {
+            const { revisarMatricula } = await import("../supabase-data.js");
+            await revisarMatricula(r.id, selector.value === "completo");
+            await window.buscarReportes();
+          } catch (error) {
+            mensajeRevision.textContent = "No se guardó la revisión: " + error.message;
+            mensajeRevision.style.color = "#b71c1c";
+            guardar.disabled = false;
+            selector.disabled = false;
+          }
+        });
+        tarjeta.append(cabecera, pasos, etiqueta, guardar, mensajeRevision);
+        celdaAlerta.appendChild(tarjeta);
+      }
       (esMatriculado(r) ? cuerpoMatriculados : cuerpoTabla).appendChild(fila);
     });
 
@@ -944,42 +1059,38 @@ window.buscarReportes = async function () {
   }
 };
 
-/* Descarga exactamente las filas que quedaron visibles tras aplicar los filtros. */
-window.descargarReporteExcel = function () {
+/* Exporta todos los datos de las matrículas que coinciden con la búsqueda. */
+window.descargarReporteExcel = async function () {
   if (!ultimosResultadosReportes.length) {
     alert("Primero realice una búsqueda con resultados.");
     return;
   }
-
-  const filas = ultimosResultadosReportes.map((matricula) => {
-    const nombre = [
-      matricula.primerNombre,
-      matricula.segundoNombre,
-      matricula.primerApellido,
-      matricula.segundoApellido,
-    ].filter(Boolean).join(" ");
-    const alerta = obtenerAlertaAcademica(matricula);
-    const etiquetas = [];
-    if (alerta.esRepitiente) etiquetas.push("Repitiendo año");
-    if (alerta.esSobreedad) etiquetas.push("Sobreedad");
-    return [
-      matricula.numeroFicha || "-",
-      matricula.nie || "-",
-      nombre || "-",
-      matricula.grado || "-",
-      normalizarEspecialidad(matricula.especialidad) || "-",
-      etiquetas.join(", ") || "—",
-      esMatriculado(matricula) ? "Matriculado" : "Inscrito",
-    ];
-  });
-
-  const fecha = new Date().toISOString().slice(0, 10);
-  descargarTablaExcel({
-    nombreArchivo: `reporte-matriculas-${fecha}`,
-    titulo: "Reporte de Matrículas - Instituto Nacional de Comercio",
-    encabezados: ["Ficha", "NIE", "Nombre completo", "Grado", "Especialidad", "Alerta", "Estado"],
-    filas,
-  });
+  const boton = document.getElementById("btnDescargarReporteExcel");
+  if (boton?.disabled) return;
+  if (boton) boton.disabled = true;
+  const ids = ultimosResultadosReportes.map(m => m.id);
+  try {
+    // Cargar la exportación al pulsar el botón evita bloquear el panel si falla su módulo.
+    const [{ obtenerMatriculasParaExcel }, { prepararReporteCompleto }] = await Promise.all([
+      import("../supabase-data.js"),
+      import("../reporte-excel.js"),
+    ]);
+    const registros = await obtenerMatriculasParaExcel(ids);
+    const reporte = prepararReporteCompleto(registros.map(m => ({ ...m, especialidad: normalizarEspecialidad(m.especialidad) })), m => {
+      const alerta = obtenerAlertaAcademica(m);
+      return [alerta.esRepitiente ? "Repitiendo año" : "", alerta.esSobreedad ? "Sobreedad" : ""].filter(Boolean).join(", ");
+    }, m => esMatriculado(m) ? "Matriculado" : "Inscrito");
+    descargarTablaExcel({
+      nombreArchivo: "reporte-matriculas-" + new Date().toISOString().slice(0, 10),
+      titulo: "Reporte completo de Matrículas - Instituto Nacional de Comercio",
+      ...reporte,
+    });
+  } catch (error) {
+    console.error("Error al exportar matrículas:", error);
+    alert("No se pudo descargar el Excel: " + error.message);
+  } finally {
+    if (boton) boton.disabled = !ultimosResultadosReportes.length;
+  }
 };
 
 function escaparTextoReporte(valor) {

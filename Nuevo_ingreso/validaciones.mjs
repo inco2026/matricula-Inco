@@ -67,3 +67,16 @@ export function errorFoto(archivo) {
   if (!archivo.size || archivo.size > 2 * 1024 * 1024) return 'La fotografía debe pesar entre 1 byte y 2 MB.';
   return '';
 }
+
+export function limiteNacimientoEstudiante(hoy = new Date()) {
+  const anio = hoy.getFullYear() - 7;
+  const mes = hoy.getMonth();
+  const dia = Math.min(hoy.getDate(), new Date(anio, mes + 1, 0).getDate());
+  return `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+export function errorNacimientoEstudiante(valor, hoy = new Date()) {
+  const error = errorFecha(valor, hoy);
+  if (error) return error;
+  return valor > limiteNacimientoEstudiante(hoy)
+    ? 'El estudiante debe tener al menos 7 años cumplidos. Revise la fecha de nacimiento.' : '';
+}

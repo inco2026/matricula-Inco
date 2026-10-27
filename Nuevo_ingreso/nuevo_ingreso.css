@@ -1311,3 +1311,32 @@ body.tema-oscuro {
 #matriculaForm select[hidden] { display:none; }
 
 #nacimientoSV[hidden], #nacimientoExterior[hidden] { display: none !important; }
+
+/* Sugerencias completas, sin recortar los nombres del centro. */
+.resultados-centros { max-height: 290px; overflow-y: auto; border: 1px solid #90b29e; border-radius: 9px; background: #fff; color: #234734; margin-top: 5px; }
+.resultados-centros[hidden] { display: none !important; }
+.resultados-centros [role=option] { padding: 12px; cursor: pointer; border-bottom: 1px solid #e0e9e3; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+.resultados-centros strong, .resultados-centros small { display: block; font-family: 'Segoe UI', Arial, sans-serif; }
+.resultados-centros strong { font-size: 14px; }
+.resultados-centros small { margin-top: 4px; font-size: 12px; }
+.resultados-centros [role=option]:hover, .resultados-centros [aria-selected=true] { background: #e1efe5; }
+.nombre-centro-completo { display:block; white-space:normal; overflow-wrap:anywhere; line-height:1.5; }
+.tema-oscuro .resultados-centros { background:#193729; color:#eff8f1; }
+.tema-oscuro .resultados-centros [role=option] { border-bottom-color:#456554; }
+.tema-oscuro .resultados-centros [role=option]:hover, .tema-oscuro .resultados-centros [aria-selected=true] { background:#315b40; }
+
+/* El escudo original se conserva separado de la composición fotográfica. */
+.encabezado { position: relative; }
+.encabezado .escudo-banner-original {
+  position: absolute;
+  left: 2.5%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15%;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px rgba(255,255,255,.9));
+}

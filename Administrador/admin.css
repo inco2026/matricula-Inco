@@ -243,6 +243,30 @@ body {
   color: #617067;
 }
 
+.modal-usuario #nuevoUsuarioRol {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 7px;
+  padding: 12px 44px 12px 15px;
+  border: 1px solid #b8d5c5;
+  border-radius: 12px;
+  background: #f0f7f2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23175b3f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 15px center;
+  color: #174e36;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.modal-usuario #nuevoUsuarioRol:hover { border-color: #478b66; }
+.modal-usuario #nuevoUsuarioRol:focus-visible { outline: none; border-color: #246c48; box-shadow: 0 0 0 3px rgba(36,108,72,.15); }
+.modal-usuario #nuevoUsuarioRol option { background: #fff; color: #244536; font-weight: 400; }
+.modal-usuario #ayudaRolUsuario { margin-top: 9px; line-height: 1.5; }
+
 .acciones-usuario {
   display: flex;
   justify-content: flex-end;
@@ -1705,3 +1729,23 @@ body {
 .campo-bloqueado { background: #eceff1 !important; cursor: not-allowed; }
 .campo-invalido { border: 1.5px solid #c62828 !important; background: #ffebee !important; }
 .error-campo { display: block; color: #c62828; font-size: 12px; margin-top: 4px; }
+
+/* Revisión de matrícula en los reportes del administrador. */
+.tabla-reportes .celda-revision { padding: 16px; min-width: 300px; white-space: normal; }
+.revision-tarjeta { padding: 18px; border: 1px solid #dce8df; border-radius: 16px; background: #fff; box-shadow: 0 3px 12px rgba(18, 71, 45, .05); text-align: left; color: #244536; }
+.revision-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.revision-cabecera strong { font-size: 14px; line-height: 1.4; }
+.revision-estado { padding: 5px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.revision-completa { color: #15603d; background: #e3f3e9; }
+.revision-pendiente { color: #835b13; background: #fff3d8; }
+.revision-pasos { list-style: none; padding: 0; margin: 0 0 16px; }
+.revision-pasos li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 12px; border-bottom: 1px solid #edf2ee; }
+.revision-pasos li span:last-child { font-weight: 600; }
+.paso-completo span:last-child { color: #20724a; }
+.paso-pendiente span:last-child { color: #94651d; }
+.revision-etiqueta { display: block; font-size: 12px; font-weight: 700; color: #456151; }
+.revision-selector { display: block; width: 100%; box-sizing: border-box; min-height: 42px; margin-top: 7px; padding: 9px 30px 9px 12px; border: 1px solid #cbdcd0; border-radius: 9px; background: #f8fbf9; color: #244536; font: inherit; font-size: 13px; cursor: pointer; }
+.revision-selector:focus-visible, .revision-guardar:focus-visible { outline: 3px solid #81b999; outline-offset: 2px; }
+.btn-nuevo-usuario.revision-guardar { width: 100%; min-height: 40px; margin-top: 12px; border-radius: 9px; font-size: 13px; }
+.revision-nota { font-size: 11px; line-height: 1.5; color: #65796c; margin: 10px 0 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .tabla-reportes .celda-revision { min-width: 265px; padding: 10px; } .revision-tarjeta { padding: 14px; } }

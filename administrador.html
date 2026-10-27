@@ -5,6 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Administrador - Sistema de Matrícula INCO</title>
   <link rel="stylesheet" href="style.css">
+
+  <style>
+    #bienvenidaAdministrador {
+      background: linear-gradient(125deg, #e1efe5 0%, #edf3e6 100%);
+      border: 1px solid #bed3c2;
+      border-top: 3px solid #438563;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 5px 16px rgba(32, 78, 52, .06);
+    }
+    #bienvenidaAdministrador h3 {
+      font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+      font-size: 2.1rem; line-height: 1.3; font-weight: 700;
+      letter-spacing: .015em; color: #194e36; margin-bottom: 18px;
+      text-align: center;
+    }
+    #bienvenidaAdministrador .texto-institucional,
+    #bienvenidaAdministrador .lista-carreras li {
+      font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+      font-size: 1.125rem; color: #284b39; text-align: left;
+    }
+    #bienvenidaAdministrador .texto-institucional { line-height: 1.8; font-weight: 400; }
+    #bienvenidaAdministrador .lista-carreras { display: block; list-style: disc; padding-left: 20px; margin-top: 16px; }
+    #bienvenidaAdministrador .lista-carreras li { font-weight: 600; line-height: 1.65; padding: 9px 0 9px 3px; }
+    #bienvenidaAdministrador .lista-carreras li::marker { color: #287249; }
+    @media (max-width: 520px) {
+      #bienvenidaAdministrador { padding: 20px 16px; }
+      #bienvenidaAdministrador h3 { font-size: 1.85rem; }
+      #bienvenidaAdministrador .texto-institucional,
+      #bienvenidaAdministrador .lista-carreras li { font-size: 1.0625rem; }
+    }
+  </style>
 </head>
 <body>
 
@@ -17,16 +49,16 @@
       <h1 class="titulo-principal">Sistema de Matrícula</h1>
       <h2 class="subtitulo-principal">Instituto Nacional de Comercio</h2>
 
-     <div class="bloque-bienvenida">
-        <h3>¡¡Bienvenidos!!</h3>
-        <p class="texto-institucional">
-         A continuación, encontrará el formulario oficial de matrícula para estudiantes de Nuevo y Antiguo Ingreso en nuestras opciones de:
-Ø  Bachillerato general
-Ø Bachillerato técnico vocacional en Desarrollo de Software y Servicios Digitales
-Ø  Bachillerato técnico vocacional en Gestión Organizacional (Primeros años)
-Ø  Bachillerato técnico Administrativo Contable (Segundos y Terceros años)
-Ø Bachillerato técnico vocacional en Servicios Turístico
-        </p>
+      <div class="bloque-bienvenida" id="bienvenidaAdministrador">
+        <h3>Bienvenidos</h3>
+        <p class="texto-institucional">Complete su matrícula de nuevo o antiguo ingreso. Estas son nuestras opciones de bachillerato:</p>
+        <ul class="lista-carreras">
+          <li>Bachillerato general</li>
+          <li>Bachillerato técnico vocacional en Desarrollo de Software y Servicios Digitales</li>
+          <li>Bachillerato técnico vocacional en Gestión Organizacional (Primeros años)</li>
+          <li>Bachillerato técnico Administrativo Contable (Segundos y Terceros años)</li>
+          <li>Bachillerato técnico vocacional en Servicios Turístico</li>
+        </ul>
       </div>
 
       <div class="opciones-ingreso">
@@ -46,8 +78,8 @@
       <p class="modal-subtitulo">Administradores, coordinadores y docentes</p>
 
       <form class="admin-login" id="formAdministrador" novalidate>
-        <label for="usuarioAdmin">Correo electrónico</label>
-        <input type="email" id="usuarioAdmin" name="usuario" placeholder="ejemplo@clases.edu.sv" autocomplete="username" required>
+        <label for="usuarioAdmin">Nombre completo</label>
+        <input type="text" id="usuarioAdmin" name="usuario" placeholder="Escriba su nombre completo" maxlength="80" autocomplete="username" required>
 
         <label for="passwordAdmin">Contraseña</label>
         <input type="password" id="passwordAdmin" name="password" autocomplete="current-password" required>
@@ -60,6 +92,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script defer src="app.js?v=20261026-nombre1"></script>
 </body>
 </html>

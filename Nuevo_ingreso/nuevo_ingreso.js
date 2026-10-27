@@ -1,14 +1,15 @@
+import { iniciarBuscadorCentros, esCentroCatalogado } from './buscador-centros.js?v=2';
 import { iniciarPaisNacimiento, nacimientoParaGuardar } from './pais-nacimiento.mjs';
 import { iniciarBuscadorNacimiento, validarLugarNacimiento } from './buscador-nacimiento.js?v=4';
 import { iniciarBorrador } from './borrador.mjs?v=5';
 import { descargarComprobantePDF as descargarPDFCompleto } from './comprobante-pdf.js';
 import { TELEFONOS_SV } from './telefonos-sv.js?v=2';
 import { crearFichaAleatoria, fichaDelAnioSiguiente } from './ficha-aleatoria.mjs';
-import { normalizarTexto, errorNombre, errorTelefono, errorCorreo, errorFecha, errorFoto, errorTextoDescriptivo } from './validaciones.mjs?v=7';
+import { normalizarTexto, errorNombre, errorTelefono, errorCorreo, errorFecha, limiteNacimientoEstudiante, errorNacimientoEstudiante, errorFoto, errorTextoDescriptivo } from './validaciones.mjs?v=8';
 import {
   crearMatricula,
   nieYaExiste,
-} from "./api-publica.js?v=2";
+} from "./api-publica.js?v=3";
 
 /* =========================================================
    REFERENCIAS
@@ -16,6 +17,7 @@ import {
 const form = document.getElementById("matriculaForm");
 iniciarBuscadorNacimiento();
 iniciarPaisNacimiento();
+iniciarBuscadorCentros();
 const mensajeExito = document.getElementById("mensajeExito");
 
 const numeroFicha = document.getElementById("numeroFicha");
@@ -230,6 +232,7 @@ function campoAplicable(el) {
 }
 
 function validarContenido(el, valor) {
+  if (el.id === 'colegioAnterior' && esCentroCatalogado(valor)) return '';
   if (el.id === 'nacimientoExtranjero') return errorTextoDescriptivo(valor, { maximo: 100 });
   const duplicadoIdentidad = errorDuplicadoContacto(el, valor);
   if (duplicadoIdentidad) return duplicadoIdentidad;
@@ -245,6 +248,7 @@ function validarContenido(el, valor) {
   if (['primerNombre', 'segundoNombre', 'primerApellido', 'segundoApellido', 'responsable', 'madreNombre', 'padreNombre'].includes(el.id) || el.classList.contains('hermano-nombre')) return errorNombre(valor, el.maxLength > 0 ? el.maxLength : 50);
   if (TELEFONOS_SV[el.id]) return errorTelefono(valor, TELEFONOS_SV[el.id].celular);
   if (el.type === 'email') return errorCorreo(valor);
+  if (el.id === 'fechaNacimiento') return errorNacimientoEstudiante(valor);
   if (el.type === 'date') return errorFecha(valor);
   if (el.tagName === 'SELECT' && !Array.from(el.options).some(o => !o.disabled && o.value === valor)) return 'Seleccione una opción válida de la lista.';
   if (el.id === 'nie' && (!/^\d{7,12}$/.test(valor) || /^0+$/.test(valor))) return 'Ingrese un NIE entre 7 y 12 dígitos, distinto de cero.';
@@ -1762,7 +1766,8 @@ function configurarFechaNacimiento() {
   const hoy = new Date();
   const hoyLocal = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000)
     .toISOString().slice(0, 10);
-  fechaNacimiento.setAttribute("max", hoyLocal);
+  fechaNacimiento.setAttribute('max', limiteNacimientoEstudiante());
+  fechaNacimiento.addEventListener('focus', () => fechaNacimiento.setAttribute('max', limiteNacimientoEstudiante()));
   const fechaCorteEdad = document.getElementById("fechaCorteEdad");
   if (fechaCorteEdad) fechaCorteEdad.value = hoyLocal;
 

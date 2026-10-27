@@ -1,10 +1,23 @@
 import { protegerRuta, cerrarSesionSupabase } from "../auth-guard.js";
 import { buscarMatriculaPorNie, guardarDocumentos, obtenerPerfil } from "../supabase-data.js";
-import { mostrarFichaConsulta } from "./ficha-consulta.js";
+import { mostrarFichaConsulta } from "./ficha-consulta.js?v=3";
 
 const accesoCoordinador = await protegerRuta("coordinador");
 
 let matriculaActa = null;
+let guardandoActa = false;
+let actaGuardada = false;
+let editandoActa = false;
+let camposBase = "";
+function firmaCampos() {
+  return JSON.stringify([...document.querySelectorAll("#actaCondicionamiento input[id]")]
+    .filter(i => !["actaDia", "actaMes", "actaAnio", "actaAnioTitulo"].includes(i.id))
+    .map(i => [i.id, i.value.trim()]));
+}
+function actualizarBotonGuardar() {
+  $("guardarActa").disabled = guardandoActa || !matriculaActa;
+}
+
 const $ = (id) => document.getElementById(id);
 const inputNie = $("nieConsulta");
 const botonConsulta = $("botonConsulta");
@@ -38,6 +51,7 @@ inputNie.addEventListener("input", () => {
   limpiarNie();
   matriculaActa = null;
   $("guardarActa").disabled = true;
+  $("modificarActa").disabled = true;
   programarConsulta();
 });
 inputNie.addEventListener("keydown", (e) => {
@@ -289,13 +303,16 @@ const medidor = document.createElement("canvas").getContext("2d");
 
 // Los campos "linea-*" se agrandan si el texto no cabe
 function ajustarAncho(input) {
-  if (![...input.classList].some((c) => c.startsWith("linea-"))) return;
+  if (input.type === "hidden" || input.closest("[hidden]")) return;
+  if (![...input.classList].some((c) => c.startsWith("linea-") || c === "firma")) return;
   if (!input.dataset.min) input.dataset.min = input.offsetWidth || 0;
   const minimo = Number(input.dataset.min);
   if (!minimo) return;
   medidor.font = getComputedStyle(input).font;
   const ancho = Math.ceil(medidor.measureText(input.value).width) + 16;
-  input.style.width = `${Math.max(minimo, ancho)}px`;
+  const limite = input.parentElement.clientWidth || 650;
+  input.style.width = `${Math.min(limite, Math.max(minimo, ancho))}px`;
+  input.style.fontSize = `${Math.max(10, Math.min(16, 16 * (limite - 12) / Math.max(ancho, 1)))}px`;
 }
 
 function setVal(id, valor, auto) {
@@ -332,7 +349,7 @@ function rellenarActa(datos) {
   setVal("actaDui", duiEnc, true);
 
   // Parentesco: Padre / Madre -> "X"; cualquier otro (Abuela, Tío...) -> Encargado/a + texto
-  const par = a.parentesco.toLowerCase();
+  const par = a.parentesco.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^papa$/, "padre").replace(/^mama$/, "madre");
   const otro = par !== "" && par !== "padre" && par !== "madre";
   marca("actaPadre", par === "padre");
   marca("actaMadre", par === "madre");
@@ -352,6 +369,7 @@ function rellenarActa(datos) {
   setVal("actaFirmaEstudiante", a.alumno, true);
   setVal("actaDuiFirmaEstudiante", formatearDui(a.duiEstudiante), true);
 
+  setVal("actaNombreCoordinador", "Alvaro francisco Solorzano Deodanes", true);
   ponerFecha();
 }
 
@@ -392,9 +410,11 @@ $("buscarMatriculaCoordinador").addEventListener("submit", async (evento) => {
   if (botonConsulta.disabled) return;
   matriculaActa = null;
   $("guardarActa").disabled = true;
+  $("modificarActa").disabled = true;
   ficha.hidden = true;
   ficha.replaceChildren();
   document.querySelectorAll("#actaCondicionamiento input").forEach(input => { input.value = ""; input.classList.remove("auto-llenado"); });
+  setVal("actaNombreCoordinador", "Alvaro francisco Solorzano Deodanes", true);
   ponerFecha();
   if (!nie) {
     estado.textContent = "Escriba el NIE del estudiante.";
@@ -424,9 +444,15 @@ $("buscarMatriculaCoordinador").addEventListener("submit", async (evento) => {
       const input = $(id);
       if (input && input.closest("#actaCondicionamiento")) { input.value = valor; ajustarAncho(input); }
     });
+    ponerFecha();
     matriculaActa = datos;
-    $("guardarActa").disabled = false;
-    estado.textContent = "Matrícula encontrada. El acta se llenó con sus datos (en azul) y puede editarla.";
+    $("modificarActa").disabled = false;
+    bloquearActa(Boolean(guardados));
+    actaGuardada = Boolean(datos.documentosChecklist?.actaCoordinador);
+    editandoActa = false;
+    camposBase = firmaCampos();
+    actualizarBotonGuardar();
+    estado.textContent = guardados ? "Acta guardada recuperada. Pulse Modificar acta para corregir sus campos." : "Matrícula encontrada. Revise los campos del acta y guarde los cambios.";
   } catch (error) {
     estado.textContent = `No se pudo consultar la matrícula. ${error.message || "Intente nuevamente."}`;
   } finally {
@@ -441,17 +467,75 @@ window.imprimirActa = function () {
 
 window.cerrarSesion = cerrarSesionSupabase;
 $("guardarActa").addEventListener("click", async () => {
- if (!accesoCoordinador || !matriculaActa) return;
+ if (!accesoCoordinador || !matriculaActa || guardandoActa) return;
+ if (actaGuardada && (!editandoActa || firmaCampos() === camposBase)) {
+   const aviso = editandoActa
+     ? "No hay cambios para guardar. El acta de este alumno ya está guardada."
+     : "El acta de este alumno ya está guardada. Pulse Modificar acta si necesita corregir algún dato.";
+   $("estadoConsulta").textContent = aviso;
+   window.alert(aviso);
+   return;
+ }
+ guardandoActa = true;
+ inputNie.disabled = true;
+ botonConsulta.disabled = true;
+ $("modificarActa").disabled = true;
  const boton = $("guardarActa");
  boton.disabled = true;
  try {
   const actual = await buscarMatriculaPorNie(matriculaActa.nie);
   if (!actual || actual.id !== matriculaActa.id) throw new Error("Busque nuevamente al estudiante.");
+  if (actual.documentosChecklist?.actaCoordinador && !actaGuardada) {
+    actaGuardada = true;
+    camposBase = firmaCampos();
+    bloquearActa(true);
+    throw new Error("Este alumno ya tiene el acta guardada. Busque nuevamente su NIE para recuperarla.");
+  }
+  ponerFecha();
   const campos = Object.fromEntries(Array.from(document.querySelectorAll("#actaCondicionamiento input[id]"), i => [i.id, i.value.trim()]));
-  if (!["actaAlumno", "actaEncargado", "actaDui", "actaBachillerato", "actaSeccion", "actaDia", "actaMes", "actaAnio"].every(id => campos[id])) throw new Error("Complete estudiante, responsable, DUI, bachillerato, sección y fecha del acta.");
+  const obligatorios = { actaNombreCoordinador: "nombre del coordinador", actaFirmaEncargado: "nombre del encargado en la firma", actaFirmaEstudiante: "nombre del estudiante en la firma", actaAlumno: "nombre del estudiante", actaEncargado: "nombre del responsable", actaDui: "DUI del responsable", actaBachillerato: "bachillerato" };
+  const faltantes = Object.entries(obligatorios).filter(([id]) => !campos[id]).map(([, nombre]) => nombre);
+  if (faltantes.length) throw new Error("Complete: " + faltantes.join(", ") + ".");
   await guardarDocumentos(actual, { ...(actual.documentosChecklist || {}), actaCoordinador: { solvente: true, campos, completadoEn: new Date().toISOString() } });
-  $("estadoConsulta").textContent = "Acta guardada y solvencia confirmada. Figurará como matriculado cuando el docente complete los documentos.";
+  actaGuardada = true;
+  editandoActa = false;
+  camposBase = firmaCampos();
+  bloquearActa(true);
+  $("estadoConsulta").textContent = "Acta guardada correctamente. Se actualizó el registro de este alumno; no se creó otro. Solvencia confirmada.";
  } catch (error) {
   $("estadoConsulta").textContent = "No se pudo guardar el acta: " + error.message;
- } finally { boton.disabled = false; }
+ } finally {
+   guardandoActa = false;
+   inputNie.disabled = false;
+   botonConsulta.disabled = false;
+   $("modificarActa").disabled = false;
+   actualizarBotonGuardar();
+ }
 });
+
+function bloquearActa(bloquear) {
+  document.querySelectorAll("#actaCondicionamiento input").forEach(input => { input.readOnly = bloquear; });
+}
+$("modificarActa").addEventListener("click", () => {
+  if (!accesoCoordinador || !matriculaActa) return;
+  editandoActa = true;
+  bloquearActa(false);
+  actualizarBotonGuardar();
+  $("actaEncargado").focus();
+  $("estadoConsulta").textContent = "Puede modificar los campos. Pulse Guardar acta para conservar los cambios.";
+});
+function prepararImpresion() {
+  ponerFecha();
+  document.querySelectorAll(".valor-impreso").forEach(el => el.remove());
+  document.querySelectorAll("#actaCondicionamiento input").forEach(input => {
+    if (input.type === "hidden" || input.closest("[hidden]")) return;
+    const texto = document.createElement("span");
+    texto.className = "valor-impreso";
+    texto.textContent = input.value || "________";
+    input.after(texto);
+  });
+}
+window.addEventListener("beforeprint", prepararImpresion);
+
+
+document.getElementById("actaCondicionamiento").addEventListener("input", actualizarBotonGuardar);

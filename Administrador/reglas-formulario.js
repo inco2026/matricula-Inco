@@ -1,9 +1,13 @@
 // Restricciones del formulario de nuevo ingreso adjunto; validadores compartidos.
-import { normalizarTexto, errorNombre, errorTelefono, errorCorreo, errorFecha, errorTextoDescriptivo, errorFoto } from '../Nuevo_ingreso/validaciones.mjs?v=7';
+import { normalizarTexto, errorNombre, errorTelefono, errorCorreo, errorFecha, errorTextoDescriptivo, errorFoto, errorNacimientoEstudiante, limiteNacimientoEstudiante } from '../Nuevo_ingreso/validaciones.mjs?v=7';
 import { TELEFONOS_SV } from '../Nuevo_ingreso/telefonos-sv.js?v=2';
-import { lugaresElSalvador, validarLugarNacimiento } from '../Nuevo_ingreso/buscador-nacimiento.js';
+import { validarLugarNacimiento } from '../Nuevo_ingreso/buscador-nacimiento.js';
+import { territorioSV } from '../Nuevo_ingreso/territorio-sv.mjs';
+const lugaresElSalvador = territorioSV.map(l => l.distrito + ' - ' + l.municipio);
 import { desactivarEdicion as cerrarEdicion, limpiarErrores, marcarErrorCampo, normalizarEspecialidad } from '../validacion-matricula.js';
 const REGLAS = {
+  paisNacimiento: { tipo: "text", req: true, max: 80, lista: 'AF AL DE AD AO AG SA DZ AR AM AU AT AZ BS BD BB BH BE BZ BJ BY BO BA BW BR BN BG BF BI BT CV KH CM CA QA TD CL CN CY CO KM CG CD KP KR CR CI HR CU DK DM EC EG SV AE ER SK SI ES US EE SZ ET PH FI FJ FR GA GM GE GH GD GR GT GN GW GQ GY HT HN HU IN ID IQ IR IE IS IL IT JM JP JO KZ KE KG KI KW LA LS LV LB LR LY LI LT LU MK MG MY MW MV ML MT MA MH MU MR MX FM MD MC MN ME MZ MM NA NR NP NI NE NG NO NZ OM NL PK PW PA PG PY PE PL PT GB CF CZ DO RO RW RU SB WS KN SM VC LC ST SN RS SC SL SG SY SO LK ZA SD SS SE CH SR TH TZ TJ TL TG TO TT TN TM TR TV UA UG UY UZ VU VA VE VN YE DJ ZM ZW PS'.split(' ').map(c => new Intl.DisplayNames(['es'],{type:'region'}).of(c)).sort((a,b)=>a.localeCompare(b,'es')) },
+  tipoModalidad: { tipo: "text", req: true, lista: ["Modalidad Regular", "Modalidad Alterna (Sábados)"] },
   "nie": {
     "tipo": "text",
     "req": true,
@@ -488,7 +492,7 @@ const REGLAS = {
   },
   "nombresHermanos": {
     "tipo": "text",
-    "max": 154
+    "max": 420
   },
   "nivelAcademico": {
     "tipo": "text",
@@ -571,7 +575,7 @@ export function activarEdicion(cont) {
   el.classList.toggle('campo-bloqueado',el.readOnly);
   if(!regla)continue;
   if(regla.max)el.maxLength=regla.max;
-  if(regla.tipo==='date') {el.type='date';const h=new Date();el.max=new Date(h-h.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+  if(regla.tipo==='date') {el.type='date';const h=new Date();el.max=k==='fechaNacimiento' ? limiteNacimientoEstudiante(h) : new Date(h-h.getTimezoneOffset()*60000).toISOString().slice(0,10);}
   if(regla.lista){
    const select=document.createElement('select');select.className='select-edicion';select.dataset.paraInput=el.id;
    select.add(new Option('Seleccione…',''));
@@ -628,14 +632,14 @@ export function errorCampo(k,v,datos) {
  if(['nombresHermanos','nivelAcademico'].includes(k)&&datos.hermanosCentroeducativo!=='Sí')return '';
  if(['cualEnfermedad','medicamento','otros'].includes(k)&&datos.enfermedad!=='Sí')return '';
  if(k==='conQuienViveOtro'&&datos.conQuienVive!=='Otros')return '';
- const req=regla.req || k==='duiEstudiante'&&Number(datos.edad)>=18 || ['nombresHermanos','nivelAcademico'].includes(k)&&datos.hermanosCentroeducativo==='Sí' || k==='cualEnfermedad'&&datos.enfermedad==='Sí' || k==='conQuienViveOtro'&&datos.conQuienVive==='Otros';
+ const req=regla.req || k==='duiEstudiante'&&Number(datos.edad)>=18 || k==='nombresHermanos'&&datos.hermanosCentroeducativo==='Sí' || k==='cualEnfermedad'&&datos.enfermedad==='Sí' || k==='conQuienViveOtro'&&datos.conQuienVive==='Otros';
  if(!v)return req?'Este campo es obligatorio.':'';
  if(regla.max && v.length>regla.max)return 'Máximo '+regla.max+' caracteres.';
  if(k==='nie' && (!/^\d{7,12}$/.test(v)||/^0+$/.test(v)))return 'Ingrese un NIE entre 7 y 12 dígitos, distinto de cero.';
  if(k==='nombresHermanos') {
   const nombres=partesLista(v);
   if(nombres.length>3)return 'Puede registrar hasta 3 hermanos, separados por punto y coma.';
-  for(const nombre of nombres){const error=errorNombre(nombre,50);if(error)return error;}
+  for(const nombre of nombres){const error=errorNombre(nombre.split(/\s[—–]\s/)[0],50);if(error)return error;}
  }
  if(k==='nivelAcademico') {
   const grados=partesLista(v);
@@ -650,8 +654,9 @@ export function errorCampo(k,v,datos) {
  if(TELEFONOS_SV[k])return errorTelefono(v,TELEFONOS_SV[k].celular);
  if(k==='correoResponsable'&&v.split('@')[0].length>15)return 'Use máximo 15 caracteres antes de @; el dominio no cuenta.';
  if(regla.tipo==='email'&&k!=='correoEstudiantil')return errorCorreo(v);
+ if(k==='fechaNacimiento')return errorNacimientoEstudiante(v);
  if(regla.tipo==='date')return errorFecha(v);
- if(k==='lugarNacimiento')return validarLugarNacimiento({value:v});
+ if(k==='lugarNacimiento')return datos.paisNacimiento && datos.paisNacimiento!=='El Salvador' ? errorTextoDescriptivo(v,{maximo:150}) : validarLugarNacimiento({value:v});
  if(k==='direccionResidencia')return errorTextoDescriptivo(v,{direccion:true,maximo:70});
  if(['madreOcupacion','padreOcupacion','madreLugarTrabajo','padreLugarTrabajo','colegioAnterior'].includes(k))return errorTextoDescriptivo(v);
  if(/^(duiEstudiante|duiResponsable|madreDui|padreDui)$/.test(k)){

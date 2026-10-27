@@ -16,8 +16,9 @@ export async function nieYaExiste(valorNie) {
 
 export async function crearMatricula(datos) {
   validarTelefonosDatos(datos);
+  if (!['Modalidad Regular', 'Modalidad Alterna (Sábados)'].includes(datos.tipoModalidad)) throw new Error('Seleccione un tipo de modalidad válido.');
   const supabase = await obtenerSupabase();
-  const funcion = datos.disponibilidadDocumentos ? 'crear_matricula_con_documentos' : 'crear_matricula';
+  const funcion = 'crear_matricula_con_modalidad';
   const { data, error } = await supabase.rpc(funcion, { p: datos });
   if (error) throw error;
   return { id: data };

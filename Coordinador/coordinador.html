@@ -6,7 +6,7 @@
   <title>Coordinación - INCO</title>
   <link rel="stylesheet" href="coordinador.css">
   <link rel="stylesheet" href="../ficha-oficial.css">
-  <link rel="stylesheet" href="acta-autollenado.css">
+  <link rel="stylesheet" href="acta-autollenado.css?v=5">
 </head>
 <body>
   <header class="barra no-imprimir">
@@ -16,6 +16,7 @@
     </div>
     <p id="identificadorCoordinador" class="identificador-panel"></p>
     <div class="acciones">
+      <button type="button" class="btn-imprimir" id="modificarActa" disabled>Modificar acta</button>
       <button type="button" class="btn-imprimir" id="guardarActa" disabled>Guardar acta y confirmar solvencia</button>
       <button type="button" class="btn-imprimir" onclick="imprimirActa()">🖨️ Imprimir acta</button>
       <button type="button" class="btn-salir" onclick="cerrarSesion()">Cerrar sesión</button>
@@ -40,22 +41,18 @@
   <main class="vista-acta">
     <form id="actaCondicionamiento" class="hoja-carta">
       <header class="encabezado-acta">
-        <img src="../img/Escudo-inco.png" alt="Escudo del Instituto Nacional de Comercio">
+        <img src="./img/Escudo-inco.png" alt="Escudo del Instituto Nacional de Comercio">
         <div>
           <h1>Instituto Nacional de Comercio</h1>
-          <h2>ACTA DE CONDICIONAMIENTO 202<input id="actaAnioTitulo" class="anio" aria-label="Año" maxlength="1"></h2>
+          <h2>ACTA DE COMPROMISO<input id="actaAnioTitulo" type="hidden"></h2>
         </div>
       </header>
 
-      <p class="motivos">
-        Nuevo Ingreso <input id="actaNuevoIngreso" maxlength="1"> &nbsp; Repitencia <input id="actaRepitencia" maxlength="1"> &nbsp; Rendimiento Académico <input id="actaRendimiento" maxlength="1">
-        &nbsp; Conducta <input id="actaConducta" maxlength="1"> &nbsp; Sobre edad <input id="actaSobreEdad" maxlength="1">
-      </p>
-
+      <div hidden><input id="actaNuevoIngreso"><input id="actaRepitencia"><input id="actaRendimiento"><input id="actaConducta"><input id="actaSobreEdad"></div>
       <p>
-        Reunidos en la oficina administrativa que ocupa la Coordinación Disciplinaria y de Convivencia Escolar del Instituto
+        Reunidos con la Coordinación Disciplinaria y de Convivencia Escolar del Instituto
         Nacional de Comercio de San Salvador, a los <input id="actaDia" class="linea-corta"> días del mes de <input id="actaMes" class="linea-media">
-        del año <input id="actaAnio" class="linea-corta">, por lo que YO <input id="actaEncargado" class="linea-larga"> responsable del estudiante con número de
+        del año <input id="actaAnio" class="linea-corta">, por lo que YO <input id="actaEncargado" class="linea-larga"> con número de
         Documento Único de Identidad (DUI) <input id="actaDui" class="linea-media" maxlength="10">, siendo su Padre <input id="actaPadre" class="linea-corta" maxlength="1"> Madre
         <input id="actaMadre" class="linea-corta" maxlength="1"> Encargado/a <input id="actaEncargadoMarca" class="linea-media"> (si no es padre ni madre favor indicar el parentesco con el estudiante)
         <input id="actaParentesco" class="linea-media"> del/la alumno/a: <input id="actaAlumno" class="linea-larga">, del Bachillerato <input id="actaBachillerato" class="linea-media" list="ofertaBachillerato2027" autocomplete="off">
@@ -66,37 +63,41 @@
           <option value="Técnico Vocacional en Servicios Turísticos"></option>
         </datalist>
         Sección <input id="actaSeccion" class="linea-corta">;
-        <strong>ACEPTO EL CONDICIONAMIENTO Y ME COMPROMETO JUNTO A MI HIJO/A</strong> a cumplir lo requerido en la presente acta,
+        <strong>ACEPTO Y ME COMPROMETO JUNTO A MI HIJO/A</strong> a cumplir lo requerido en la presente acta,
         lo cual consiste en que si mi hijo/a <strong>REPRUEBA TRES O MÁS MATERIAS O PRESENTA FALTAS DISCIPLINARIAS</strong>
         contempladas en el <strong>MANUAL DE CONVIVENCIA</strong>, inmediatamente se le comunicará a la madre, padre y/o encargado/a,
         por lo que me comprometo a:
       </p>
 
       <ol>
-        <li>Asistir puntualmente a las reuniones de madres y padres.</li>
-        <li>Vigilar la conducta y rendimiento académico.</li>
-        <li>Estar en comunicación constante con los coordinadores y con la subdirección cuando lo amerite.</li>
-        <li>Revisar diariamente sus tareas.</li>
-        <li>Constatar que asista puntualmente a clases.</li>
-        <li>Proporcionar todo lo necesario para su estudio.</li>
-        <li>Revisar constantemente que ande adecuadamente su uniforme, pantalón normal en los caballeros no punta de yuca (que no mida más ni menos de 22 centímetros), velar porque las faldas y pantalones no sean rinconeros/as, faldas debajo de la rodilla, camisa blanca por dentro de la falda o pantalón, zapatos negros de lustrar bien limpios; en el caso de las señoritas la falda debe ser a la cintura no apretada ni ajustada, las alumnas no pueden presentarse con maquillaje ni los jóvenes con barba o cejas depiladas.</li>
-        <li>Para los estudiantes condicionados por conducta, se advierte que a la menor falta leve que cometa será convocado para apertura de expediente respectivo y se sancionará de forma más severa debido a que ya se tomó los compromisos adquiridos al momento de ser condicionado.</li>
-        <li>Leer detenidamente todos los artículos citados en el manual de convivencia y respetarlo según lo indica.</li>
+        <li>Constatar que asista todos los días y puntualmente a clases por lo menos 15 minutos antes de su horario de clase.</li>
+        <li>Notificar en Registro Académico cualquier cambio y números de contacto y de domicilio.</li>
+        <li>Andar con el corte de cabello francesa clara durante todo el año.</li>
+        <li>Revisar constantemente que ande su uniforme diario limpio y ordenado y el de educación física únicamente cuando su horario lo indique.</li>
+        <li>Recordar que los noviazgos dentro de la institución no están permitidos.</li>
+        <li>La Institución no se hace responsable de pérdidas de objetos de valor como celulares, audífonos, dinero o cualquier otro.</li>
+        <li>No debe traer audífonos a la institución.</li>
+        <li>No debe solicitar retirar a su hijo de la institución antes de su hora de salida según horario, a menos que se compruebe algún procedimiento médico.</li>
+        <li>Evitar publicaciones en las redes sociales que alteren o denigren la convivencia escolar.</li>
+        <li>Debe traer todos los días de clase la computadora otorgada por el Ministerio de Educación.</li>
+        <li>No se permiten en su cuerpo tatuajes, piercing, aretes (caballeros) u otros artículos que no van con el uniforme.</li>
+        <li>Asistir puntualmente a las reuniones de madres y padres y vigilar la conducta y rendimiento académico.</li>
+        <li>Leer el manual de convivencia para conocer las disposiciones institucionales.</li>
       </ol>
 
       <p class="cierre">Y no habiendo más que citar en dichos compromisos, firmamos a continuación como autoridades disciplinarias y personas comprometidas a cumplir con lo antes expuesto para mejorar dichas conductas.</p>
 
       <section class="firmas-coordinacion">
-        <div>Coordinador Disciplinario y de Convivencia<br>Matutino</div>
-        <div>Coordinador Disciplinario y de Convivencia<br>Vespertino</div>
+        <div><input id="actaNombreCoordinador" class="firma" aria-label="Nombre del coordinador" value="Alvaro francisco Solorzano Deodanes"><br>Coordinador Disciplinario y de Convivencia</div>
       </section>
-
       <section class="firmas-finales">
-        <div><strong>ENCARGADO</strong><br><br>F: <input id="actaFirmaEncargado" class="firma"><br>DUI: <input id="actaDuiFirmaEncargado" class="firma" maxlength="10"></div>
-        <div><strong>ESTUDIANTE</strong><br><br>F: <input id="actaFirmaEstudiante" class="firma"><br>DUI: <input id="actaDuiFirmaEstudiante" class="firma" maxlength="10"></div>
+        <div><strong>ENCARGADO</strong><br><input id="actaFirmaEncargado" class="firma" aria-label="Nombre del encargado"></div>
+        <div><strong>ESTUDIANTE</strong><br><input id="actaFirmaEstudiante" class="firma" aria-label="Nombre del estudiante"></div>
       </section>
+      <div hidden><input id="actaDuiFirmaEncargado"><input id="actaDuiFirmaEstudiante"></div>
     </form>
   </main>
-  <script type="module" src="coordinador.js"></script>
+  <script type="module" src="coordinador.js?v=6"></script>
 </body>
 </html>
+

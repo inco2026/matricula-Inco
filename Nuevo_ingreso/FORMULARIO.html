@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Matrícula INCO - Nuevo ingreso</title>
-  <link rel="stylesheet" href="nuevo_ingreso.css?v=15" />
+  <link rel="stylesheet" href="nuevo_ingreso.css?v=18" />
   <style>
     /* ===== Estilos para la sección de Hermanos (dinámica) ===== */
     #bloqueHermanos {
@@ -360,9 +360,10 @@
 </button>
 
 <header class="encabezado">
-    <img src="./img/encabezado-matricula.png"
+    <img src="./img/encabezado-matricula-campus.png"
          alt="Sistema de Matrícula - Instituto Nacional de Comercio"
          class="banner">
+    <img src="./img/escudo-transparente.png" alt="Escudo del Instituto Nacional de Comercio" class="escudo-banner-original">
 </header>
 
   <main class="contenedor-formulario">
@@ -583,6 +584,14 @@
         </div>
 
         <div class="grid-2">
+          <div class="campo">
+            <label for="tipoModalidad">Tipo de Modalidad</label>
+            <select id="tipoModalidad" name="tipoModalidad" required>
+              <option value="" disabled selected>Seleccione la modalidad</option>
+              <option value="Modalidad Regular">Modalidad Regular</option>
+              <option value="Modalidad Alterna (Sábados)">Modalidad Alterna (Sábados)</option>
+            </select>
+          </div>
           <div class="campo">
             <label for="hermanosCentroeducativo">¿Tiene hermanos en este Centro Educativo?</label>
             <select id="hermanosCentroeducativo" name="hermanosCentroeducativo" required>
@@ -1047,7 +1056,7 @@
     </section>
   </main>
 
-  <script type="module" src="nuevo_ingreso.js?v=30"></script>
+  <script type="module" src="nuevo_ingreso.js?v=34"></script>
 
 </body>
 </html>

@@ -31,6 +31,7 @@
     .acciones-documento .btn-Modificar:hover { background:#004d40 !important; }
     .acciones-documento button:disabled { opacity:.6 !important; cursor:not-allowed; }
   </style>
+<link rel="stylesheet" href="../ficha-oficial.css?v=20261026-carta1">
 </head>
 <body>
 
@@ -75,6 +76,7 @@
 
         <!-- ACCIONES -->
         <div class="acciones-documento">
+          <button type="button" onclick="imprimirFichaDocente()" class="btn-Modificar">Imprimir ficha carta</button>
           <button onclick="modificarcampos()" class="btn-Modificar" id="btnModificar">✏️ Modificar</button>
           <button onclick="guardarCambios()" class="btn-guardar" id="btnGuardarCambios" style="display:none;">💾 Guardar cambios</button>
           <button onclick="cancelarModificacion()" class="btn-cancelar" id="btnCancelarCambios" style="display:none;">❌ Cancelar</button>
@@ -121,7 +123,7 @@
             <div class="grid-2">
             <div class="campo" id="editarFotoAdministrador" hidden><label for="fotoAdministrador">Fotografía (JPG o PNG, máximo 2 MB)</label><input type="file" id="fotoAdministrador" accept="image/jpeg,image/png"></div>
 <div class="campo"><label for="r_duiEstudiante">DUI del estudiante</label><input type="text" id="r_duiEstudiante" readonly class="campo-lectura"></div>
-<div class="campo"><label for="r_lugarNacimiento">Lugar de nacimiento</label><input type="text" id="r_lugarNacimiento" readonly class="campo-lectura"></div>
+<div class="campo"><label for="r_paisNacimiento">País de nacimiento</label><input type="text" id="r_paisNacimiento" readonly class="campo-lectura"></div><div class="campo"><label for="r_lugarNacimiento">Lugar de nacimiento</label><input type="text" id="r_lugarNacimiento" readonly class="campo-lectura"></div>
 <div class="campo"><label for="r_tipoTransporte">Tipo de transporte</label><input type="text" id="r_tipoTransporte" readonly class="campo-lectura"></div>
 <div class="campo"><label for="r_distanciaKm">Distancia en KM</label><input type="text" id="r_distanciaKm" readonly class="campo-lectura"></div>
 <div class="campo"><label for="r_zonaResidencia">Zona de residencia</label><input type="text" id="r_zonaResidencia" readonly class="campo-lectura"></div>
@@ -177,7 +179,7 @@
               <input type="text" id="r_grado" readonly class="campo-lectura">
             </div>
             <div class="campo">
-              <label>Tipo de Ingreso</label>
+              <label for="r_tipoModalidad">Tipo de modalidad</label><input type="text" id="r_tipoModalidad" readonly class="campo-lectura"></div><div class="campo"><label for="r_tipoIngreso">Tipo de Ingreso</label>
               <input type="text" id="r_tipoIngreso" readonly class="campo-lectura">
             </div>
             <div class="campo">
@@ -380,6 +382,6 @@
     </main>
   </div>
 
-  <script type="module" src="docente.js"></script>
+  <script type="module" src="docente.js?v=20261026-ficha-carta2"></script>
 </body>
 </html>

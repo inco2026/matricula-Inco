@@ -7,9 +7,9 @@
 
   <title>Administrador - INCO</title>
 
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=20261026-rol1">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
 
@@ -301,6 +301,7 @@
     }
 
   </style>
+<link rel="stylesheet" href="../ficha-oficial.css?v=20261026-carta1">
 </head>
 
 <body>
@@ -347,7 +348,7 @@
             href="#"
             onclick="mostrarDocentes()"
           >
-            Docentes
+            Usuarios
           </a>
 
         </nav>
@@ -706,8 +707,8 @@
         id="seccionDocentes"
         style="display: none;"
       >
-        <h2>Docentes registrados</h2>
-        <p>Personal docente autorizado para revisar expedientes.</p>
+        <h2>Usuarios del sistema</h2>
+        <p>Cree cuentas para administradores, coordinadores y docentes. Puede inhabilitarlas y habilitarlas nuevamente sin borrar sus datos.</p>
         <button type="button" class="btn-nuevo-usuario" onclick="abrirNuevoUsuario()">
           + Nuevo usuario
         </button>
@@ -721,6 +722,8 @@
                 <th>Correo</th>
                 <th>Rol</th>
                 <th>Fecha de registro</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="cuerpoTablaDocentes"></tbody>
@@ -831,7 +834,7 @@
           <div class="campo" id="editarFotoAdministrador" hidden><label for="fotoAdministrador">Fotografía (JPG o PNG, máximo 2 MB)</label><input type="file" id="fotoAdministrador" accept="image/jpeg,image/png"></div>
 <div class="campo"><label for="r_duiEstudiante">DUI del estudiante</label><input type="text" id="r_duiEstudiante" readonly class="campo-lectura"></div>
 
-          <div class="campo"><label for="r_lugarNacimiento">Lugar de nacimiento</label><input type="text" id="r_lugarNacimiento" readonly class="campo-lectura"></div>
+          <div class="campo"><label for="r_paisNacimiento">País de nacimiento</label><input type="text" id="r_paisNacimiento" readonly class="campo-lectura"></div><div class="campo"><label for="r_lugarNacimiento">Lugar de nacimiento</label><input type="text" id="r_lugarNacimiento" readonly class="campo-lectura"></div>
 <div class="campo">
               <label>Primer Apellido</label>
               <input type="text" id="r_primerApellido" readonly class="campo-lectura">
@@ -897,7 +900,7 @@
           <div class="grid-2">
 
             
-          <div class="campo"><label for="r_tipoIngreso">Tipo de ingreso</label><input type="text" id="r_tipoIngreso" readonly class="campo-lectura"></div>
+          <div class="campo"><label for="r_tipoModalidad">Tipo de modalidad</label><input type="text" id="r_tipoModalidad" readonly class="campo-lectura"></div><div class="campo"><label for="r_tipoIngreso">Tipo de ingreso</label><input type="text" id="r_tipoIngreso" readonly class="campo-lectura"></div>
 <div class="campo">
               <label>Grado</label>
               <input type="text" id="r_grado" readonly class="campo-lectura">
@@ -1295,7 +1298,7 @@
   >
     <div class="modal-expediente modal-usuario">
       <div class="modal-expediente-header">
-        <h3>Nuevo usuario docente</h3>
+        <h3>Crear nuevo usuario</h3>
         <button type="button" class="modal-cerrar" onclick="cerrarNuevoUsuario()" aria-label="Cerrar">×</button>
       </div>
 
@@ -1303,7 +1306,8 @@
         <form id="formNuevoUsuario">
           <div class="campo campo-full">
             <label for="nuevoUsuarioNombre">Nombre completo</label>
-            <input id="nuevoUsuarioNombre" name="nombre" type="text" maxlength="80" required autocomplete="name">
+            <input id="nuevoUsuarioNombre" name="nombre" type="text" maxlength="80" required autocomplete="name" aria-describedby="ayudaNombreUsuario">
+            <small id="ayudaNombreUsuario">El nombre completo será el que utilizará para ingresar al sistema.</small>
           </div>
 
           <div class="campo campo-full">
@@ -1313,15 +1317,25 @@
 
           <div class="campo campo-full">
             <label for="nuevoUsuarioContrasena">Contraseña inicial</label>
-            <input id="nuevoUsuarioContrasena" name="contrasena" type="password" minlength="8" required autocomplete="new-password">
-            <small>Mínimo 8 caracteres. Entréguesela únicamente al docente.</small>
+            <input id="nuevoUsuarioContrasena" name="contrasena" type="password" minlength="8" maxlength="128" required autocomplete="new-password">
+            <small>Mínimo 8 caracteres. Entréguesela únicamente a la persona titular de la cuenta.</small>
+          </div>
+
+          <div class="campo campo-full">
+            <label for="nuevoUsuarioRol">Rol del usuario</label>
+            <select id="nuevoUsuarioRol" name="rol" required aria-describedby="ayudaRolUsuario">
+              <option value="docente">Docente</option>
+              <option value="coordinador">Coordinador</option>
+              <option value="administrador">Administrador</option>
+            </select>
+            <small id="ayudaRolUsuario">El rol determina a qué panel podrá ingresar esta persona. Administrador permite gestionar usuarios.</small>
           </div>
 
           <p id="mensajeNuevoUsuario" class="mensaje-admin" aria-live="polite"></p>
 
           <div class="acciones-usuario">
             <button type="button" class="btn-limpiar-reporte" onclick="cerrarNuevoUsuario()">Cancelar</button>
-            <button type="submit" id="btnCrearDocente" class="btn-nuevo-usuario">Crear docente</button>
+            <button type="submit" id="btnCrearDocente" class="btn-nuevo-usuario">Crear usuario</button>
           </div>
         </form>
       </div>
@@ -1329,10 +1343,10 @@
   </div>
 
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script
     type="module"
-    src="admin.js"
+    src="admin.js?v=20261026-ficha-carta2"
   ></script>
 
 </body>

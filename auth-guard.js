@@ -10,11 +10,11 @@ async function protegerRuta(rolRequerido) {
 
   const { data: perfil, error: perfilError } = await supabase
     .from("perfiles")
-    .select("nombre, correo, rol")
+    .select("*")
     .eq("id", session.user.id)
     .single();
 
-  if (perfilError || !perfil || perfil.rol !== rolRequerido) {
+  if (perfilError || !perfil || perfil.activo === false || perfil.rol !== rolRequerido) {
     window.location.replace("../administrador.html");
     return false;
   }

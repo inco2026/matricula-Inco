@@ -1,12 +1,9 @@
 import { supabase } from "./supabase-config.js";
 
 const SELECCION_COMPLETA = `
-  id, alumno_id, numero_ficha, anio_lectivo, grado, especialidad,
-  tipo_ingreso, estado, fecha_matricula, hora_matricula, creado_en,
+  *,
   alumnos!inner (
-    id, nie, dui, primer_nombre, segundo_nombre, primer_apellido,
-    segundo_apellido, fecha_nacimiento, lugar_nacimiento, edad, sexo,
-    telefono, correo_estudiantil, correo_personal, foto_base64,
+    *,
     padres (*), responsables (*), salud (*), residencias (*), recursos (*)
   ),
   estudios (*),
@@ -67,7 +64,12 @@ function aDocumentoPlano(fila) {
     };
   }
 
+  const formulario = fila.datos_formulario || {};
+  const condiciones = formulario.condicionesSalud || [];
   return {
+    datosFormulario: formulario,
+    paisNacimiento: a.pais_nacimiento || formulario.paisNacimiento || "",
+    tipoModalidad: fila.tipo_modalidad || formulario.tipoModalidad || "",
     id: fila.id,
     alumnoId: fila.alumno_id,
     numeroFicha: fila.numero_ficha || "",
@@ -77,6 +79,9 @@ function aDocumentoPlano(fila) {
     especialidad: fila.especialidad || "",
     tipoIngreso: fila.tipo_ingreso || "",
     estado: fila.estado || "",
+    revisionCompleta: typeof fila.revision_completa === "boolean" ? fila.revision_completa : null,
+    revisadoPorNombre: fila.revisado_por_nombre || "",
+    revisadoEn: fila.revisado_en || "",
     fechaRegistro: fila.creado_en || "",
 
     nie: a.nie || "",
@@ -128,9 +133,9 @@ function aDocumentoPlano(fila) {
 
     vacunaCovid: s.vacuna_covid || "",
     enfermedad: s.enfermedad || "",
-    cualEnfermedad: s.cual_enfermedad || "",
-    medicamento: s.medicamento || "",
-    otros: s.otros || "",
+    cualEnfermedad: s.cual_enfermedad || condiciones.map(c => c.enfermedad || "").join("; "),
+    medicamento: s.medicamento || condiciones.map(c => c.medicamento || "").join("; "),
+    otros: s.otros || condiciones.map(c => c.otros || "").join("; "),
 
     direccionResidencia: residencia.direccion || "",
     zonaResidencia: residencia.zona || "",
@@ -181,7 +186,7 @@ async function buscarMatriculaPorNie(nie) {
 
 // El reporte no necesita fotografías ni la ficha completa de cada estudiante.
 const SELECCION_REPORTE = `
-  id, alumno_id, numero_ficha, grado, especialidad, tipo_ingreso, creado_en,
+  *,
   alumnos!inner (id, nie, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, edad),
   estudios (ultimo_anio_aprobado),
   documentos_matricula (*)
@@ -206,6 +211,24 @@ async function listarMatriculas() {
   })());
 }
 
+// La descarga obtiene todas las relaciones solo para los resultados seleccionados.
+async function obtenerMatriculasParaExcel(ids) {
+  const registros = [];
+  for (let inicio = 0; inicio < ids.length; inicio += 50) {
+    const { data, error } = await conTiempoMaximo(supabase.from("matriculas")
+      .select("*, alumnos!inner (*, padres (*), responsables (*), salud (*), residencias (*), recursos (*)), estudios (*), documentos_matricula (*)")
+      .in("id", ids.slice(inicio, inicio + 50)));
+    if (error) throw error;
+    registros.push(...(data || []));
+  }
+  const porId = new Map(registros.map(fila => [fila.id, fila]));
+  return ids.map(id => {
+    const fila = porId.get(id);
+    if (!fila) throw new Error("Una matrícula ya no está disponible. Repita la búsqueda antes de descargar.");
+    return { ...aDocumentoPlano(fila), datosCompletos: fila };
+  });
+}
+
 async function listarDocentes() {
   const { data, error } = await supabase
     .from("perfiles")
@@ -216,35 +239,58 @@ async function listarDocentes() {
   return data || [];
 }
 
-async function crearDocente({ nombre, correo, contrasena }) {
-  // La función valida el rol del usuario que la invoca. Enviamos de forma
-  // explícita la sesión actual para que Supabase identifique al administrador
-  // correcto al crear una cuenta nueva.
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) {
-    throw new Error("La sesión de administrador expiró. Cierre sesión e ingrese nuevamente.");
-  }
+async function listarUsuarios() {
+  const { data, error } = await supabase.from("perfiles")
+    .select("*").order("nombre", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
 
-  const { data, error } = await supabase.functions.invoke("crear-docente", {
-    body: { nombre, correo, contrasena },
-    headers: { Authorization: `Bearer ${session.access_token}` },
+async function crearUsuario({ nombre, correo, contrasena, rol }) {
+  if (!["administrador", "coordinador", "docente"].includes(rol)) throw new Error("Seleccione un rol válido.");
+  const { data: { session }, error: errorSesion } = await supabase.auth.getSession();
+  if (errorSesion || !session?.access_token) throw new Error("La sesión expiró. Cierre sesión e ingrese nuevamente.");
+  // Verificar la identidad real y su perfil, no el rol guardado en sessionStorage.
+  const { data: identidad, error: errorIdentidad } = await supabase.auth.getUser(session.access_token);
+  if (errorIdentidad || !identidad?.user) throw new Error("La sesión no es válida. Cierre sesión e ingrese nuevamente.");
+  const { data: perfil, error: errorPerfil } = await supabase.from("perfiles")
+    .select("*").eq("id", identidad.user.id).single();
+  if (errorPerfil) throw new Error("No se pudo consultar su permiso de administrador. Código: " + (errorPerfil.code || "sin detalle"));
+  if (perfil?.activo === false) throw new Error("Su cuenta está inhabilitada.");
+  if (perfil?.rol !== "administrador") throw new Error("La cuenta conectada " + (identidad.user.email || "") + " no tiene rol de administrador.");
+  const { data, error } = await supabase.functions.invoke("crear-usuario", {
+    body: { nombre, correo, contrasena, rol },
+    headers: { Authorization: "Bearer " + session.access_token },
   });
   if (error) {
-    // FunctionsHttpError solo muestra un texto genérico. Leemos la respuesta
-    // de la función para que el administrador vea la causa real.
     let detalle = "";
-    try {
-      const respuesta = error.context;
-      const cuerpo = respuesta ? await respuesta.clone().json() : null;
-      detalle = cuerpo?.error || "";
-    } catch {
-      // Si la respuesta no trae JSON, se conserva el mensaje original.
+    try { detalle = (await error.context?.clone().json())?.error || ""; } catch {}
+    if (/solo un administrador puede crear usuarios/i.test(detalle)) {
+      throw new Error("Su cuenta " + (identidad.user.email || "") + " sí está verificada como administrador, pero la función publicada rechazó el permiso. Debe revisarse crear-usuario en Supabase. No cambie más cuentas ni roles.");
     }
-    throw new Error(detalle || error.message || "No se pudo crear el docente.");
+    throw new Error(detalle || error.message || "No se pudo crear el usuario.");
   }
-  if (!data?.ok) throw new Error(data?.error || "No se pudo crear el docente.");
-  return data.docente;
+  if (!data?.ok || data.usuario?.rol !== rol) throw new Error(data?.error || "No se pudo confirmar el rol del usuario. Consulte al encargado técnico antes de reintentar.");
+  return data.usuario;
 }
+
+async function revisarMatricula(id, completa) {
+  if (typeof completa !== "boolean") throw new Error("Seleccione completo o incompleto.");
+  const { data, error } = await supabase.rpc("revisar_matricula", { p_id: id, p_completa: completa });
+  if (error) throw new Error(error.code === "PGRST202" ? "Falta activar la revisión administrativa en Supabase." : error.message);
+  if (!data || data.id !== id || data.revision_completa !== completa) throw new Error("No se pudo confirmar la revisión.");
+  return data;
+}
+
+async function cambiarEstadoUsuario(id, activo) {
+  if (typeof activo !== "boolean") throw new Error("Estado inválido.");
+  const { data, error } = await supabase.rpc("cambiar_estado_usuario", { p_id: id, p_activo: activo });
+  if (error) throw new Error(error.code === "PGRST202" ? "Falta activar la inhabilitación de usuarios en Supabase." : error.message);
+  if (!data || data.id !== id || data.activo !== activo) throw new Error("No se pudo confirmar el cambio de estado.");
+  return data;
+}
+
+async function crearDocente(datos) { return crearUsuario({ ...datos, rol: "docente" }); }
 
 async function obtenerPerfil(id) {
   if (!id) return null;
@@ -275,10 +321,15 @@ async function actualizarMatricula(registro, cambios) {
 
   const datosMatricula = seleccionarCambios(cambios, {
     numeroFicha: "numero_ficha", grado: "grado", especialidad: "especialidad",
-    tipoIngreso: "tipo_ingreso", estado: "estado",
+    tipoIngreso: "tipo_ingreso", tipoModalidad: "tipo_modalidad", estado: "estado",
   });
   if (Object.prototype.hasOwnProperty.call(cambios, "fechaMatricula")) {
     datosMatricula.fecha_matricula = fechaParaBD(cambios.fechaMatricula);
+  }
+  if (registro.datosFormulario && Object.keys(registro.datosFormulario).length) {
+    datosMatricula.datos_formulario = { ...registro.datosFormulario, ...cambios };
+    delete datosMatricula.datos_formulario.fotoEstudiante;
+    if (["cualEnfermedad", "medicamento", "otros"].some(k => Object.prototype.hasOwnProperty.call(cambios,k))) delete datosMatricula.datos_formulario.condicionesSalud;
   }
   agregar("matriculas", datosMatricula, "id", registro.id);
 
@@ -288,7 +339,7 @@ async function actualizarMatricula(registro, cambios) {
     segundoApellido: "segundo_apellido", lugarNacimiento: "lugar_nacimiento",
     edad: "edad", sexo: "sexo", telefonoEstudiante: "telefono",
     correoEstudiantil: "correo_estudiantil", correoPersonal: "correo_personal",
-    fotoEstudiante: "foto_base64",
+    fotoEstudiante: "foto_base64", paisNacimiento: "pais_nacimiento",
   });
   if (Object.prototype.hasOwnProperty.call(cambios, "fechaNacimiento")) {
     datosAlumno.fecha_nacimiento = fechaParaBD(cambios.fechaNacimiento);
@@ -371,10 +422,15 @@ export {
   actualizarMatricula,
   buscarMatriculaPorNie,
   crearDocente,
+  crearUsuario,
+  cambiarEstadoUsuario,
+  revisarMatricula,
   crearMatricula,
   eliminarMatricula,
   guardarDocumentos,
   listarDocentes,
+  listarUsuarios,
+  obtenerMatriculasParaExcel,
   listarMatriculas,
   nieYaExiste,
   obtenerPerfil,

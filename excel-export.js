@@ -1,10 +1,11 @@
 /* Exportación .xlsx estándar mediante la librería cargada en admin.html. */
-export function descargarTablaExcel({ nombreArchivo, titulo, encabezados, filas }) {
+export function descargarTablaExcel({ nombreArchivo, titulo, encabezados, filas, hojasAdicionales = [] }) {
   const XLSX = window.XLSX;
   if (!XLSX) {
     throw new Error("No se pudo preparar el archivo Excel. Recargue la página e inténtelo nuevamente.");
   }
 
+  function crearHoja(titulo, encabezados, filas) {
   const datos = [[titulo], encabezados, ...filas];
   const hoja = XLSX.utils.aoa_to_sheet(datos);
   const ultimaColumna = XLSX.utils.encode_col(encabezados.length - 1);
@@ -17,7 +18,13 @@ export function descargarTablaExcel({ nombreArchivo, titulo, encabezados, filas 
     ), 38),
   }));
 
+  return hoja;
+  }
+
   const libro = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(libro, hoja, "Reportes");
+  XLSX.utils.book_append_sheet(libro, crearHoja(titulo, encabezados, filas), "Reportes");
+  for (const adicional of hojasAdicionales) {
+    XLSX.utils.book_append_sheet(libro, crearHoja(adicional.titulo, adicional.encabezados, adicional.filas), adicional.nombre);
+  }
   XLSX.writeFile(libro, `${nombreArchivo}.xlsx`, { compression: true });
 }
